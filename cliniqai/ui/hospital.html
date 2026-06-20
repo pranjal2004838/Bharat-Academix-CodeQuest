@@ -276,6 +276,37 @@
       </div>
     </div>
 
+    <!-- Global Patient Search -->
+    <div class="glass-panel p-6 mb-10 gs-reveal-up relative">
+      <h3 class="text-lg font-bold text-white heading-font mb-4">Global Patient Search</h3>
+      <div class="flex gap-4">
+        <input type="text" id="search-phone" class="flex-1 bg-gray-800/50 border border-gray-700 text-white px-4 py-3 rounded-xl focus:outline-none focus:border-emerald-500" placeholder="Enter Mobile Number (e.g., 9876543210)" onkeydown="if(event.key==='Enter') searchPatient()">
+        <button class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-3 rounded-xl font-bold transition-colors" onclick="searchPatient()">Search Registry</button>
+      </div>
+      
+      <!-- Search Results Area -->
+      <div id="search-result-area" class="mt-6 hidden">
+        <div id="search-result-content" class="p-4 bg-gray-800/50 border border-gray-700 rounded-xl"></div>
+        
+        <!-- OTP Flow -->
+        <div id="otp-flow-area" class="mt-4 hidden p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl">
+          <p class="text-sm text-amber-400 mb-4" id="otp-message"></p>
+          
+          <div id="otp-req-view">
+            <button class="w-full bg-amber-600 hover:bg-amber-500 text-white px-4 py-2 rounded-lg font-bold transition-colors" onclick="requestOTP()">Request OTP Authorization</button>
+          </div>
+          
+          <div id="otp-verify-view" class="hidden">
+            <p class="text-xs text-amber-500 font-bold mb-2 uppercase">Enter 6-Digit OTP</p>
+            <div class="flex gap-3">
+              <input type="text" id="otp-input" class="flex-1 bg-gray-900 border border-amber-500/50 text-white px-4 py-2 text-center tracking-[0.5em] text-lg font-bold rounded-lg focus:outline-none focus:border-amber-400" placeholder="123456" maxlength="6" onkeydown="if(event.key==='Enter') verifyOTP()">
+              <button class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2 rounded-lg font-bold transition-colors" onclick="verifyOTP()">Verify & Unlock</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Patient List -->
     <div class="glass-panel p-6 gs-reveal-up" style="min-height: 400px;">
       <div class="flex justify-between items-center mb-6">
@@ -351,6 +382,102 @@
 
     // --- API Mock Logic (Preserving hooks) ---
     const API = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : window.location.origin;
+
+    // --- Global Search & OTP Logic ---
+    let currentSearchPhone = "";
+    const loggedHosp = "HSP_MUMBAI_001"; // Demo Hardcoded
+    const loggedDoc = "DR_DEMO_001"; // Demo Hardcoded
+
+    async function searchPatient() {
+      const phone = document.getElementById('search-phone').value.trim();
+      if (!phone) return;
+      currentSearchPhone = phone;
+      
+      const resArea = document.getElementById('search-result-area');
+      const resContent = document.getElementById('search-result-content');
+      const otpFlow = document.getElementById('otp-flow-area');
+      
+      resArea.classList.remove('hidden');
+      resContent.innerHTML = `<div class="text-gray-400 text-sm animate-pulse">Searching global registry...</div>`;
+      otpFlow.classList.add('hidden');
+
+      try {
+        const res = await fetch(`${API}/api/patients/${phone}?hosp_id=${loggedHosp}`);
+        if (res.status === 404) {
+          resContent.innerHTML = `<div class="text-gray-400 text-sm">No records found for ${phone}. They will be onboarded upon their first prescription upload.</div>`;
+          document.getElementById('upload-phone').value = phone;
+          return;
+        }
+        
+        const data = await res.json();
+        const p = data.patient;
+        
+        let html = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-4">
+              <div class="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-500/50 flex items-center justify-center text-lg font-bold text-emerald-400">
+                ${p.name.substring(0,2).toUpperCase()}
+              </div>
+              <div>
+                <div class="text-white font-bold text-lg">${p.name}</div>
+                <div class="text-sm text-gray-400">${p.phone}</div>
+              </div>
+            </div>
+            ${!data.requires_otp ? `<button class="bg-gray-700 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-bold" onclick="loadPatientFromRecent('${p.phone}')">Open File</button>` : ''}
+          </div>
+        `;
+        resContent.innerHTML = html;
+
+        if (data.requires_otp) {
+          otpFlow.classList.remove('hidden');
+          document.getElementById('otp-req-view').classList.remove('hidden');
+          document.getElementById('otp-verify-view').classList.add('hidden');
+          document.getElementById('otp-message').innerHTML = `This patient has not visited <strong>${loggedHosp}</strong> before. OTP authorization is required to access their clinical history.`;
+        }
+
+      } catch (e) {
+        resContent.innerHTML = `<div class="text-red-400 text-sm">Error searching registry.</div>`;
+      }
+    }
+
+    async function requestOTP() {
+      const btn = document.querySelector('#otp-req-view button');
+      btn.innerHTML = 'Sending...';
+      try {
+        const res = await fetch(`${API}/access/request-otp`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ patient_phone: currentSearchPhone, requesting_hosp_id: loggedHosp, requesting_doc_id: loggedDoc })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          document.getElementById('otp-req-view').classList.add('hidden');
+          document.getElementById('otp-verify-view').classList.remove('hidden');
+          alert('DEMO MODE - SMS SENT\\n\\nOTP: ' + data.demo_otp);
+        } else {
+          alert(data.message);
+        }
+      } catch(e) {}
+      btn.innerHTML = 'Request OTP Authorization';
+    }
+
+    async function verifyOTP() {
+      const otp = document.getElementById('otp-input').value.trim();
+      if (!otp) return;
+      try {
+        const res = await fetch(`${API}/access/verify-otp`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ patient_phone: currentSearchPhone, requesting_hosp_id: loggedHosp, requesting_doc_id: loggedDoc, otp: otp })
+        });
+        const data = await res.json();
+        if (data.ok) {
+          searchPatient(); // Reload
+        } else {
+          alert(data.message);
+        }
+      } catch(e) {}
+    }
 
     async function loadRecent() {
       try {

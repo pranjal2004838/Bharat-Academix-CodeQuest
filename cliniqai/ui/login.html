@@ -214,21 +214,52 @@
         <p class="text-gray-400 text-sm mt-2">CliniqAI Unified Medical Records</p>
       </div>
 
-      <form id="login-form">
+      <!-- Login Tabs -->
+      <div class="flex mb-8 bg-gray-800/50 p-1 rounded-xl border border-gray-700">
+        <button id="tab-provider" class="flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all" onclick="switchTab('provider')">Provider</button>
+        <button id="tab-patient" class="flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all" onclick="switchTab('patient')">Patient</button>
+      </div>
+
+      <div id="login-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-400 text-sm rounded-lg text-center">
+        Invalid credentials. Please try again.
+      </div>
+
+      <!-- Provider Form -->
+      <form id="provider-form" class="auth-form">
         <div class="input-group">
           <input type="text" id="doctorId" class="input-field" required autocomplete="off">
-          <label for="doctorId" class="input-label">Doctor ID or Email</label>
+          <label for="doctorId" class="input-label">Doctor ID (e.g. DR_DEMO_001)</label>
           <div class="laser-line"></div>
         </div>
 
         <div class="input-group">
           <input type="password" id="password" class="input-field" required>
-          <label for="password" class="input-label">Biometric Passkey</label>
+          <label for="password" class="input-label">Password (e.g. demo123)</label>
           <div class="laser-line"></div>
         </div>
 
-        <button type="submit" class="auth-btn" id="submit-btn">
-          Authenticate
+        <button type="submit" class="auth-btn provider-btn">
+          Authenticate Provider
+          <div class="shimmer"></div>
+        </button>
+      </form>
+
+      <!-- Patient Form -->
+      <form id="patient-form" class="auth-form hidden">
+        <div class="input-group">
+          <input type="text" id="mobile" class="input-field" required autocomplete="off">
+          <label for="mobile" class="input-label">Mobile Number (e.g. 9876543210)</label>
+          <div class="laser-line"></div>
+        </div>
+
+        <div class="input-group">
+          <input type="password" id="otp" class="input-field" required>
+          <label for="otp" class="input-label">6-Digit OTP (e.g. 1234)</label>
+          <div class="laser-line"></div>
+        </div>
+
+        <button type="submit" class="auth-btn patient-btn">
+          Authenticate Patient
           <div class="shimmer"></div>
         </button>
       </form>
@@ -257,24 +288,71 @@
       delay: 0.5
     });
 
-    // Form interaction mechanics
-    const form = document.getElementById('login-form');
-    const btn = document.getElementById('submit-btn');
+    let currentTab = 'provider';
+    const errorBox = document.getElementById('login-error');
+
+    function switchTab(tab) {
+      currentTab = tab;
+      errorBox.classList.add('hidden');
+      
+      const tabProvider = document.getElementById('tab-provider');
+      const tabPatient = document.getElementById('tab-patient');
+      const formProvider = document.getElementById('provider-form');
+      const formPatient = document.getElementById('patient-form');
+
+      if (tab === 'provider') {
+        tabProvider.className = "flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all";
+        tabPatient.className = "flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all";
+        formProvider.classList.remove('hidden');
+        formPatient.classList.add('hidden');
+      } else {
+        tabPatient.className = "flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all";
+        tabProvider.className = "flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all";
+        formPatient.classList.remove('hidden');
+        formProvider.classList.add('hidden');
+      }
+    }
 
     // Add physical bump effect to inputs
     document.querySelectorAll('.input-field').forEach(input => {
       input.addEventListener('keydown', () => {
         gsap.fromTo(input, { scale: 1.02 }, { scale: 1, duration: 0.1 });
+        errorBox.classList.add('hidden'); // clear error on typing
       });
     });
 
-    form.addEventListener('submit', (e) => {
+    function handleLogin(e, type) {
       e.preventDefault();
       
-      // Trigger loading state
+      let isValid = false;
+      let targetUrl = '';
+
+      if (type === 'provider') {
+        const id = document.getElementById('doctorId').value;
+        const pass = document.getElementById('password').value;
+        if (id === 'DR_DEMO_001' && pass === 'demo123') {
+          isValid = true;
+          targetUrl = "/hospital";
+        }
+      } else {
+        const mobile = document.getElementById('mobile').value;
+        const otp = document.getElementById('otp').value;
+        if (mobile === '9876543210' && otp === '1234') {
+          isValid = true;
+          targetUrl = "/patient";
+        }
+      }
+
+      if (!isValid) {
+        errorBox.classList.remove('hidden');
+        // Shake animation
+        gsap.fromTo("#login-card", { x: -10 }, { x: 10, duration: 0.1, yoyo: true, repeat: 3, onComplete: () => gsap.set("#login-card", { x: 0 }) });
+        return;
+      }
+
+      const btn = e.target.querySelector('button[type="submit"]');
       btn.classList.add('loading');
       
-      // Simulate network request then animate out
       setTimeout(() => {
         gsap.to("#login-card", {
           scale: 1.5,
@@ -282,11 +360,14 @@
           duration: 0.8,
           ease: "power4.in",
           onComplete: () => {
-            window.location.href = "/hospital";
+            window.location.href = targetUrl;
           }
         });
-      }, 1500);
-    });
+      }, 1000);
+    }
+
+    document.getElementById('provider-form').addEventListener('submit', (e) => handleLogin(e, 'provider'));
+    document.getElementById('patient-form').addEventListener('submit', (e) => handleLogin(e, 'patient'));
   </script>
 </body>
 </html>

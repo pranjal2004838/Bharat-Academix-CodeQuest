@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CliniqAI — Portal Access</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+      background: #050505;
+      color: #fff;
+    }
+
+    /* Morphing Mesh Gradient Background */
+    .mesh-bg {
+      position: absolute;
+      top: -50%; left: -50%;
+      width: 200%; height: 200%;
+      background: 
+        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.4) 0%, transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.3) 0%, transparent 40%),
+        radial-gradient(circle at 20% 80%, rgba(4DD0E1, 0.2) 0%, transparent 40%);
+      filter: blur(80px);
+      animation: rotateMesh 20s infinite linear;
+      z-index: 1;
+    }
+
+    @keyframes rotateMesh {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Grid overlay for depth */
+    .grid-overlay {
+      position: absolute;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      z-index: 2;
+      opacity: 0.5;
+    }
+
+    /* Glass Card */
+    .portal-container {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .glass-card {
+      background: rgba(25, 25, 30, 0.4);
+      backdrop-filter: blur(40px);
+      -webkit-backdrop-filter: blur(40px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-top: 1px solid rgba(255, 255, 255, 0.3);
+      border-left: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 24px;
+      padding: 3.5rem 3rem;
+      width: 100%;
+      max-width: 440px;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+      transform: translateY(30px);
+      opacity: 0;
+    }
+
+    .heading-font { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Custom Input fields */
+    .input-group {
+      position: relative;
+      margin-bottom: 2rem;
+    }
+
+    .input-field {
+      width: 100%;
+      background: rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 12px;
+      padding: 1.2rem 1rem 0.6rem;
+      color: white;
+      font-size: 1rem;
+      outline: none;
+      transition: background 0.3s, border-color 0.3s;
+    }
+    
+    .input-field:focus {
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .input-label {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.4);
+      pointer-events: none;
+      transition: 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+      font-weight: 500;
+    }
+
+    /* Floating label mechanics */
+    .input-field:focus ~ .input-label,
+    .input-field:valid ~ .input-label {
+      top: 0.4rem;
+      transform: translateY(0) scale(0.75);
+      transform-origin: left top;
+      color: #10B981;
+      text-shadow: 0 0 8px rgba(16,185,129,0.5);
+    }
+
+    /* Laser line animation */
+    .laser-line {
+      position: absolute;
+      bottom: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: #10B981;
+      box-shadow: 0 0 10px #10B981, 0 0 20px #10B981;
+      border-radius: 0 0 12px 12px;
+      transition: width 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    
+    .input-field:focus ~ .laser-line { width: 100%; }
+
+    /* Button Shimmer */
+    .auth-btn {
+      width: 100%;
+      padding: 1.2rem;
+      background: #10B981;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+      box-shadow: 0 10px 25px rgba(16,185,129,0.2);
+    }
+
+    .auth-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 35px rgba(16,185,129,0.4);
+      background: #059669;
+    }
+
+    .shimmer {
+      position: absolute;
+      top: 0; left: -100%;
+      width: 50%; height: 100%;
+      background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
+      transform: skewX(-20deg);
+      animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { left: -100%; }
+      20% { left: 200%; }
+      100% { left: 200%; }
+    }
+
+    /* Loading state */
+    .auth-btn.loading {
+      color: transparent;
+      pointer-events: none;
+    }
+    .auth-btn.loading::after {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 24px; height: 24px;
+      margin: -12px 0 0 -12px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 0.8s infinite linear;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+  </style>
+</head>
+<body>
+
+  <div class="mesh-bg"></div>
+  <div class="grid-overlay"></div>
+
+  <div class="portal-container">
+    <div class="glass-card" id="login-card">
+      
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 bg-emerald-500/20 rounded-full mx-auto mb-4 flex items-center justify-center border border-emerald-500/50" id="logo-icon">
+          <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+            <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="#10B981" stroke-width="1.5"/>
+            <path d="M8 12H16M12 8V16" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <h1 class="text-3xl font-bold heading-font tracking-tight">Secure Portal</h1>
+        <p class="text-gray-400 text-sm mt-2">CliniqAI Unified Medical Records</p>
+      </div>
+
+      <form id="login-form">
+        <div class="input-group">
+          <input type="text" id="doctorId" class="input-field" required autocomplete="off">
+          <label for="doctorId" class="input-label">Doctor ID or Email</label>
+          <div class="laser-line"></div>
+        </div>
+
+        <div class="input-group">
+          <input type="password" id="password" class="input-field" required>
+          <label for="password" class="input-label">Biometric Passkey</label>
+          <div class="laser-line"></div>
+        </div>
+
+        <button type="submit" class="auth-btn" id="submit-btn">
+          Authenticate
+          <div class="shimmer"></div>
+        </button>
+      </form>
+
+      <div class="mt-6 text-center text-xs text-gray-500">
+        Unauthorized access is strictly prohibited and logged.
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Entrance animation
+    gsap.to("#login-card", {
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: "expo.out",
+      delay: 0.2
+    });
+
+    gsap.from("#logo-icon", {
+      scale: 0,
+      rotation: -180,
+      duration: 1.5,
+      ease: "elastic.out(1, 0.4)",
+      delay: 0.5
+    });
+
+    // Form interaction mechanics
+    const form = document.getElementById('login-form');
+    const btn = document.getElementById('submit-btn');
+
+    // Add physical bump effect to inputs
+    document.querySelectorAll('.input-field').forEach(input => {
+      input.addEventListener('keydown', () => {
+        gsap.fromTo(input, { scale: 1.02 }, { scale: 1, duration: 0.1 });
+      });
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      // Trigger loading state
+      btn.classList.add('loading');
+      
+      // Simulate network request then animate out
+      setTimeout(() => {
+        gsap.to("#login-card", {
+          scale: 1.5,
+          opacity: 0,
+          duration: 0.8,
+          ease: "power4.in",
+          onComplete: () => {
+            window.location.href = "hospital.html";
+          }
+        });
+      }, 1500);
+    });
+  </script>
+</body>
+</html>

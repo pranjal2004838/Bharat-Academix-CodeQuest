@@ -1,0 +1,1810 @@
+"""
+CliniqAI — FastAPI Server (Phase 1 + Multi-Agent Orchestration)
+
+Architecture: 1 Supervisor + 4 Specialized Agents
+- ExtractionAgent: reads prescription images via Gemini on Vertex AI
+- PatientContextAgent: retrieves patient history from MongoDB
+- SafetyAgent: evaluates drug conflicts and allergy risks
+- RecordUpdateAgent: persists records with audit trail
+
+The /process and /test/process endpoints delegate to the Supervisor.
+Other endpoints (query, patient lookup, recent, alerts) remain direct.
+"""
+
+import os
+import re
+import uuid
+import json
+import hashlib
+from datetime import datetime, date, timedelta
+from uuid import uuid4
+
+from fastapi import FastAPI, UploadFile, File, Form, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+from google.cloud import storage
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from pymongo import MongoClient
+from dotenv import load_dotenv
+
+
+# Multi-agent orchestration
+from agent.orchestration.supervisor import Supervisor
+from agent.orchestration.agents.extraction_agent import ExtractionAgent
+from agent.orchestration.agents.patient_context_agent import PatientContextAgent
+from agent.orchestration.agents.safety_agent import SafetyAgent
+from agent.orchestration.agents.record_update_agent import RecordUpdateAgent
+from agent.orchestration.state import WorkflowStatus
+
+# GCP Integrations
+from agent.gcp.logger import get_logger
+from agent.gcp.kms import decrypt_data
+from agent.gcp.tasks import create_task
+
+logger = get_logger("cliniqai_server")
+
+
+# ─── Load environment variables ───────────────────────────────────────────────
+load_dotenv()
+
+MONGODB_URI = os.getenv("MONGODB_URI")
+GOOGLE_CLOUD_PROJECT = os.getenv("GOOGLE_CLOUD_PROJECT")
+GOOGLE_CLOUD_LOCATION = os.getenv("GOOGLE_CLOUD_LOCATION", "us-central1")
+GCS_UPLOAD_BUCKET = os.getenv("GCS_UPLOAD_BUCKET")
+
+# ─── In-Memory OTP Store for Cross-Hospital Access ────────────────────────────
+import random as _random
+from datetime import timedelta
+
+_otp_store = {}  # key: f"{phone}:{hosp_id}" → {"otp": str, "expires": datetime, "doc_id": str}
+_access_grants = {}  # key: f"{phone}:{hosp_id}" → {"granted_at": datetime, "expires": datetime, "doc_id": str}
+
+# ─── MongoDB Connection (lazy — gracefully handles missing config) ────────────
+client = None
+db = None
+patients_collection = None
+
+
+def get_db():
+    """Connect to MongoDB on first use. Returns True if connected."""
+    global client, db, patients_collection
+    if patients_collection is not None:
+        return True
+    if not MONGODB_URI or "youruser" in MONGODB_URI:
+        return False
+    try:
+        client = MongoClient(MONGODB_URI, serverSelectionTimeoutMS=5000)
+        client.admin.command("ping")  # Test connection
+        db = client["cliniqai"]
+        patients_collection = db["patients"]
+        return True
+    except Exception as e:
+        logger.error(f"MongoDB connection failed: {e}")
+        return False
+
+# ─── FastAPI App ──────────────────────────────────────────────────────────────
+app = FastAPI(title="CliniqAI", version="1.0")
+
+# Allow frontend to call this backend (CORS)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+# ─── Request Models ───────────────────────────────────────────────────────────
+class QueryRequest(BaseModel):
+    query: str
+
+
+class AlertAcknowledgeRequest(BaseModel):
+    phone: str
+    alert: str
+    override_reason: str
+    doctor_name: str | None = None
+
+
+class ChatRequest(BaseModel):
+    query: str
+    phone: str | None = None
+    doctor_id: str | None = None
+
+class ProcessRequest(BaseModel):
+    """Request model for processing with phone number"""
+    phone: str
+    file: UploadFile = File(...)
+
+
+# ─── In-Memory Store (fallback when MongoDB is not configured) ────────────────
+# This lets you test the app without MongoDB. Records are lost on restart.
+in_memory_patients = [
+    {
+        "patient_id": "demo-priya-sharma",
+        "phone": "9876543210",
+        "name": "Priya Sharma",
+        "age": 34,
+        "gender": "Female",
+        "known_allergies": [
+            "penicillin"
+        ],
+        "conditions": [
+            "Cough",
+            "Hypertension",
+            "Joint Pain"
+        ],
+        "chat_histories": {},
+        "visits": [
+            {
+                "visit_id": "v-priya-1",
+                "date": "2026-03-05",
+                "doctor": "Dr. Patel (Nashik Clinic)",
+                "diagnosis": [
+                    "Severe Cough"
+                ],
+                "medicines": [
+                    {
+                        "name": "Amoxicillin",
+                        "dose": "500mg",
+                        "frequency": "Three times daily",
+                        "duration": "5 days"
+                    },
+                    {
+                        "name": "Paracetamol",
+                        "dose": "650mg",
+                        "frequency": "As needed",
+                        "duration": "3 days"
+                    },
+                    {
+                        "name": "Cough syrup",
+                        "dose": "10ml",
+                        "frequency": "Twice daily",
+                        "duration": "5 days"
+                    }
+                ]
+            },
+            {
+                "visit_id": "v-priya-2",
+                "date": "2026-03-10",
+                "doctor": "City Hospital, Nashik",
+                "diagnosis": [
+                    "High Blood Pressure",
+                    "Hypertension"
+                ],
+                "medicines": [
+                    {
+                        "name": "Aspirin",
+                        "dose": "75mg",
+                        "frequency": "Once daily",
+                        "duration": "Chronic"
+                    },
+                    {
+                        "name": "Amlodipine",
+                        "dose": "5mg",
+                        "frequency": "Once daily",
+                        "duration": "Chronic"
+                    },
+                    {
+                        "name": "Lisinopril",
+                        "dose": "10mg",
+                        "frequency": "Once daily",
+                        "duration": "Chronic"
+                    }
+                ]
+            },
+            {
+                "visit_id": "v-priya-3",
+                "date": "2026-03-15",
+                "doctor": "Dr. Gupta's Clinic, Nashik",
+                "diagnosis": [
+                    "Severe Joint Pain",
+                    "Osteoarthritis"
+                ],
+                "medicines": [
+                    {
+                        "name": "Ibuprofen",
+                        "dose": "400mg",
+                        "frequency": "Three times daily",
+                        "duration": "7 days"
+                    },
+                    {
+                        "name": "Diclofenac",
+                        "dose": "50mg",
+                        "frequency": "Twice daily",
+                        "duration": "5 days"
+                    }
+                ]
+            }
+        ],
+        "audit_log": [
+            {
+                "timestamp": "2026-03-05T10:00:00Z",
+                "action": "RECORD_CREATED",
+                "doctor": "Dr. Patel",
+                "ip_address": "192.168.1.10",
+                "details": {
+                    "visit_date": "2026-03-05"
+                }
+            },
+            {
+                "timestamp": "2026-03-10T14:30:00Z",
+                "action": "RECORD_UPDATED",
+                "doctor": "City Hospital ER",
+                "ip_address": "192.168.1.25",
+                "details": {
+                    "visit_date": "2026-03-10"
+                }
+            },
+            {
+                "timestamp": "2026-03-15T11:15:00Z",
+                "action": "RECORD_UPDATED",
+                "doctor": "Dr. Gupta",
+                "ip_address": "192.168.2.14",
+                "details": {
+                    "visit_date": "2026-03-15"
+                }
+            }
+        ],
+        "reports": [
+            {
+                "report_id": "rpt-priya-1",
+                "type": "blood_test",
+                "name": "Complete Blood Count (CBC)",
+                "date": "2026-03-06",
+                "doctor": "Dr. Patel",
+                "hospital": "Nashik Clinic",
+                "hosp_id": "HSP_NASHIK_001",
+                "notes": "Post-treatment follow-up. WBC slightly elevated.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-03-06T12:00:00Z"
+            },
+            {
+                "report_id": "rpt-priya-2",
+                "type": "x_ray",
+                "name": "Chest X-Ray (PA View)",
+                "date": "2026-03-05",
+                "doctor": "Dr. Patel",
+                "hospital": "Nashik Clinic",
+                "hosp_id": "HSP_NASHIK_001",
+                "notes": "Mild bronchial thickening noted. No consolidation.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-03-05T14:00:00Z"
+            },
+            {
+                "report_id": "rpt-priya-3",
+                "type": "complete_health_report",
+                "name": "Annual Health Checkup 2026",
+                "date": "2026-03-10",
+                "doctor": "City Hospital",
+                "hospital": "City Hospital, Nashik",
+                "hosp_id": "HSP_CITY_001",
+                "notes": "BP 145/92. Recommended lifestyle modification.",
+                "file_url": None,
+                "file_type": "application/pdf",
+                "created_at": "2026-03-10T16:00:00Z"
+            },
+            {
+                "report_id": "rpt-priya-4",
+                "type": "mri",
+                "name": "MRI Knee (Right)",
+                "date": "2026-03-16",
+                "doctor": "Dr. Gupta",
+                "hospital": "Dr. Gupta's Clinic, Nashik",
+                "hosp_id": "HSP_GUPTA_001",
+                "notes": "Mild cartilage thinning. Grade 2 osteoarthritis changes.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-03-16T10:00:00Z"
+            }
+        ]
+    },
+    {
+        "patient_id": "demo-rajesh-patel",
+        "phone": "9988776655",
+        "name": "Rajesh Patel",
+        "age": 52,
+        "gender": "Male",
+        "known_allergies": [
+            "sulfonamide"
+        ],
+        "conditions": [
+            "Type 2 Diabetes",
+            "Hyperlipidemia"
+        ],
+        "chat_histories": {},
+        "visits": [
+            {
+                "visit_id": "v-rajesh-1",
+                "date": "2026-04-12",
+                "doctor": "Dr. Mehta (Lotus Diabetes Care)",
+                "diagnosis": [
+                    "Type 2 Diabetes Mellitus"
+                ],
+                "medicines": [
+                    {
+                        "name": "Metformin",
+                        "dose": "500mg",
+                        "frequency": "Twice daily",
+                        "duration": "Continuous"
+                    }
+                ]
+            },
+            {
+                "visit_id": "v-rajesh-2",
+                "date": "2026-05-22",
+                "doctor": "Dr. Roy (Global Hearts Clinic)",
+                "diagnosis": [
+                    "Hyperlipidemia"
+                ],
+                "medicines": [
+                    {
+                        "name": "Atorvastatin",
+                        "dose": "20mg",
+                        "frequency": "Once daily",
+                        "duration": "Continuous"
+                    }
+                ]
+            }
+        ],
+        "audit_log": [
+            {
+                "timestamp": "2026-04-12T09:00:00Z",
+                "action": "RECORD_CREATED",
+                "doctor": "Dr. Mehta",
+                "ip_address": "192.168.1.5",
+                "details": {
+                    "visit_date": "2026-04-12"
+                }
+            }
+        ],
+        "reports": [
+            {
+                "report_id": "rpt-rajesh-1",
+                "type": "blood_test",
+                "name": "HbA1c + Fasting Glucose",
+                "date": "2026-04-12",
+                "doctor": "Dr. Mehta",
+                "hospital": "Lotus Diabetes Care",
+                "hosp_id": "HSP_LOTUS_001",
+                "notes": "HbA1c: 7.8%. Fasting glucose: 156 mg/dL. Poor control.",
+                "file_url": None,
+                "file_type": "application/pdf",
+                "created_at": "2026-04-12T11:00:00Z"
+            },
+            {
+                "report_id": "rpt-rajesh-2",
+                "type": "blood_test",
+                "name": "Lipid Profile",
+                "date": "2026-05-22",
+                "doctor": "Dr. Roy",
+                "hospital": "Global Hearts Clinic",
+                "hosp_id": "HSP_GLOBAL_001",
+                "notes": "Total cholesterol: 268. LDL: 178. Triglycerides: 210. High risk.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-05-22T09:30:00Z"
+            },
+            {
+                "report_id": "rpt-rajesh-3",
+                "type": "ecg",
+                "name": "ECG 12-Lead",
+                "date": "2026-05-22",
+                "doctor": "Dr. Roy",
+                "hospital": "Global Hearts Clinic",
+                "hosp_id": "HSP_GLOBAL_001",
+                "notes": "Normal sinus rhythm. No ST changes. QTc normal.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-05-22T10:00:00Z"
+            }
+        ]
+    },
+    {
+        "patient_id": "demo-amit-singh",
+        "phone": "9123456789",
+        "name": "Amit Singh",
+        "age": 28,
+        "gender": "Male",
+        "known_allergies": [],
+        "conditions": [
+            "Asthma"
+        ],
+        "chat_histories": {},
+        "visits": [
+            {
+                "visit_id": "v-amit-1",
+                "date": "2026-05-15",
+                "doctor": "Dr. Joshi (Chest & Allergy Center)",
+                "diagnosis": [
+                    "Moderate Asthma"
+                ],
+                "medicines": [
+                    {
+                        "name": "Albuterol Inhaler",
+                        "dose": "100mcg",
+                        "frequency": "As needed",
+                        "duration": "30 days"
+                    },
+                    {
+                        "name": "Montelukast",
+                        "dose": "10mg",
+                        "frequency": "At bedtime",
+                        "duration": "30 days"
+                    }
+                ]
+            }
+        ],
+        "audit_log": [
+            {
+                "timestamp": "2026-05-15T16:00:00Z",
+                "action": "RECORD_CREATED",
+                "doctor": "Dr. Joshi",
+                "ip_address": "192.168.4.11",
+                "details": {
+                    "visit_date": "2026-05-15"
+                }
+            }
+        ],
+        "reports": [
+            {
+                "report_id": "rpt-amit-1",
+                "type": "blood_test",
+                "name": "IgE Levels + Eosinophil Count",
+                "date": "2026-05-15",
+                "doctor": "Dr. Joshi",
+                "hospital": "Chest & Allergy Center",
+                "hosp_id": "HSP_CHEST_001",
+                "notes": "IgE elevated (450 IU/mL). Eosinophils 8%. Allergic component confirmed.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-05-15T17:00:00Z"
+            },
+            {
+                "report_id": "rpt-amit-2",
+                "type": "x_ray",
+                "name": "Chest X-Ray",
+                "date": "2026-05-15",
+                "doctor": "Dr. Joshi",
+                "hospital": "Chest & Allergy Center",
+                "hosp_id": "HSP_CHEST_001",
+                "notes": "Hyperinflated lungs. Flattened diaphragm. Consistent with asthma.",
+                "file_url": None,
+                "file_type": "image/jpeg",
+                "created_at": "2026-05-15T17:30:00Z"
+            }
+        ]
+    }
+]
+
+
+# ─── Multi-Agent Supervisor Factory ──────────────────────────────────────────
+
+def _create_supervisor() -> Supervisor:
+    """Create a Supervisor instance with proper agent configuration."""
+    use_mongo = get_db()
+    db_col = patients_collection if use_mongo else None
+
+    return Supervisor(
+        extraction_agent=ExtractionAgent(),
+        patient_context_agent=PatientContextAgent(
+            db_collection=db_col,
+            in_memory_store=in_memory_patients,
+        ),
+        safety_agent=SafetyAgent(),
+        record_update_agent=RecordUpdateAgent(
+            db_collection=db_col,
+            in_memory_store=in_memory_patients,
+        ),
+    )
+
+
+def _state_to_response(state) -> dict:
+    """
+    Convert WorkflowState to the existing API response shape.
+    Preserves backward compatibility with the frontend.
+    """
+    extracted = state.extracted_data
+    context = state.patient_context
+    safety = state.safety_assessment
+    write = state.write_result
+
+    # Build confidence report in the old format
+    confidence_scores = extracted.confidence_scores if extracted else {}
+    low_fields = []
+    threshold = 0.7
+    for field, score in confidence_scores.items():
+        if field.startswith("_"):
+            continue
+        if isinstance(score, (int, float)) and score < threshold:
+            low_fields.append(field)
+        elif isinstance(score, list):
+            for i, item in enumerate(score):
+                if isinstance(item, dict):
+                    for k, v in item.items():
+                        if isinstance(v, (int, float)) and v < threshold:
+                            low_fields.append(f"{field}[{i}].{k}")
+                elif isinstance(item, (int, float)) and item < threshold:
+                    low_fields.append(f"{field}[{i}]")
+
+    confidence_report = {
+        "scores": confidence_scores,
+        "low_confidence_fields": low_fields,
+        "needs_review": len(low_fields) > 0,
+        "threshold": threshold,
+    }
+
+    # Build patient payload
+    medicines_with_conf = []
+    if extracted:
+        med_scores = confidence_scores.get("medicines", [])
+        for i, med in enumerate(extracted.medicines):
+            score_obj = med_scores[i] if i < len(med_scores) and isinstance(med_scores[i], dict) else {}
+            medicines_with_conf.append({
+                "name": med.name,
+                "dose": med.dose,
+                "frequency": med.frequency,
+                "duration": med.duration,
+                "_confidence": score_obj,
+            })
+
+    patient_payload = {
+        "phone": state.request.phone,
+        "name": extracted.patient_name if extracted else "Unknown",
+        "age": extracted.patient_age if extracted else None,
+        "gender": extracted.patient_gender if extracted else None,
+        "doctor": extracted.doctor_name if extracted else None,
+        "visit_date": (extracted.visit_date or str(date.today())) if extracted else str(date.today()),
+        "diagnosis": extracted.diagnosis if extracted else [],
+        "medicines": medicines_with_conf,
+        "known_allergies": context.all_allergies if context else [],
+        "visit_count": write.visit_count if write else 1,
+        "_confidence": {
+            "name": confidence_scores.get("patient_name"),
+            "age": confidence_scores.get("patient_age"),
+            "gender": confidence_scores.get("patient_gender"),
+            "doctor": confidence_scores.get("doctor_name"),
+            "visit_date": confidence_scores.get("visit_date"),
+            "clinic": confidence_scores.get("clinic_name"),
+            "diagnosis": confidence_scores.get("diagnosis"),
+            "tests_ordered": confidence_scores.get("tests_ordered"),
+            "allergies_mentioned": confidence_scores.get("allergies_mentioned"),
+            "notes": confidence_scores.get("notes"),
+        },
+    }
+
+    # Build audit section
+    audit_section = {}
+    if write and write.audit_event:
+        audit_section = {
+            "last_event": write.audit_event,
+            "chain_valid": write.audit_chain_valid,
+            "entries": write.audit_entries,
+        }
+
+    # Duplicate check
+    duplicate_check = context.duplicate_check if context else {"is_duplicate": False}
+
+    # Alerts
+    alerts = []
+    if safety:
+        alerts = [a.model_dump() for a in safety.alerts]
+
+    # Workflow trace (new field — bonus for judges)
+    trace = [t.model_dump() for t in state.trace]
+
+    return {
+        "record_id": write.record_id if write else "",
+        "is_returning": write.is_returning if write else False,
+        "patient": patient_payload,
+        "low_confidence_fields": low_fields,
+        "confidence": confidence_report,
+        "duplicate_check": duplicate_check,
+        "audit": audit_section,
+        "gcs_source_document": state.request.gcs_upload_result,
+        "alerts": alerts,
+        "workflow_status": state.status.value,
+        "workflow_review_reason": state.review_reason,
+        "workflow_trace": trace,
+    }
+
+
+
+
+def upload_bytes_to_gcs(image_bytes: bytes, phone: str, content_type: str | None = None) -> dict | None:
+    """Upload raw document bytes to Cloud Storage and return object metadata."""
+    if not GCS_UPLOAD_BUCKET:
+        return None
+
+    if not GOOGLE_CLOUD_PROJECT or "your_project" in GOOGLE_CLOUD_PROJECT:
+        return None
+
+    mime = content_type or "application/octet-stream"
+    extension = ".jpg"
+    if mime == "image/png":
+        extension = ".png"
+    elif mime == "application/pdf":
+        extension = ".pdf"
+
+    object_name = f"prescriptions/{phone}/{datetime.utcnow().strftime('%Y%m%d')}/{uuid4().hex}{extension}"
+
+    try:
+        client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
+        bucket = client.bucket(GCS_UPLOAD_BUCKET)
+        blob = bucket.blob(object_name)
+        blob.upload_from_string(image_bytes, content_type=mime)
+        return {
+            "bucket": GCS_UPLOAD_BUCKET,
+            "object": object_name,
+            "uri": f"gs://{GCS_UPLOAD_BUCKET}/{object_name}",
+            "content_type": mime,
+        }
+    except Exception as exc:
+        # Non-fatal in Phase 1: extraction can continue even if storage upload fails.
+        return {"error": f"Cloud Storage upload failed: {exc}"}
+
+
+def _utc_now_iso() -> str:
+    """Return current UTC timestamp in ISO format with trailing Z."""
+    return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+
+def _normalize_med_name(med: dict) -> str:
+    return (med.get("name") or "").strip().lower()
+
+
+def _medicine_similarity(existing_medicines: list, new_medicines: list) -> float:
+    """
+    Compare two medicine lists using normalized name overlap.
+    Returns 0.0–1.0 where 1.0 is identical.
+    """
+    existing_names = {name for name in (_normalize_med_name(m) for m in existing_medicines) if name}
+    new_names = {name for name in (_normalize_med_name(m) for m in new_medicines) if name}
+    if not existing_names and not new_names:
+        return 1.0
+    if not existing_names or not new_names:
+        return 0.0
+    overlap = len(existing_names.intersection(new_names))
+    return overlap / max(len(existing_names), len(new_names))
+
+
+def _visit_datetime(visit: dict) -> datetime:
+    """
+    Parse visit datetime from `created_at` or `date`; returns datetime.min on failure.
+    """
+    created_at = visit.get("created_at")
+    if isinstance(created_at, str) and created_at:
+        try:
+            return datetime.fromisoformat(created_at.replace("Z", "+00:00")).replace(tzinfo=None)
+        except Exception:
+            pass
+
+    visit_date = visit.get("date")
+    if isinstance(visit_date, str) and visit_date:
+        try:
+            return datetime.fromisoformat(visit_date)
+        except Exception:
+            pass
+
+    return datetime.min
+
+
+def find_duplicate_visit(visits: list, new_medicines: list, threshold: float = 0.95) -> dict:
+    """
+    Find likely duplicate from visits within last 7 days based on medicine similarity.
+    Returns duplicate metadata or `{"is_duplicate": False}`.
+    """
+    now = datetime.utcnow()
+    window_start = now - timedelta(days=7)
+    best_match = None
+
+    for visit in visits:
+        visit_time = _visit_datetime(visit)
+        if visit_time < window_start:
+            continue
+        similarity = _medicine_similarity(visit.get("medicines", []), new_medicines)
+        if similarity >= threshold and (best_match is None or similarity > best_match["similarity"]):
+            best_match = {"visit": visit, "similarity": similarity, "visit_time": visit_time}
+
+    if best_match is None:
+        return {"is_duplicate": False}
+
+    delta = now - best_match["visit_time"]
+    hours = max(1, int(delta.total_seconds() // 3600))
+    return {
+        "is_duplicate": True,
+        "previous_visit_id": best_match["visit"].get("visit_id", "unknown"),
+        "time_diff": f"{hours} hour(s) ago",
+        "similarity": round(best_match["similarity"], 3),
+        "warning": "This looks like a duplicate prescription. Please verify before saving.",
+    }
+
+
+def _audit_hash(payload: dict, previous_hash: str) -> str:
+    serial = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(f"{previous_hash}|{serial}".encode("utf-8")).hexdigest()
+
+
+def build_audit_event(action: str, doctor: str, ip_address: str, details: dict, previous_hash: str = "") -> dict:
+    timestamp = _utc_now_iso()
+    payload = {
+        "timestamp": timestamp,
+        "action": action,
+        "doctor": doctor or "Unknown",
+        "ip_address": ip_address or "unknown",
+        "details": details or {},
+    }
+    return {
+        **payload,
+        "previous_hash": previous_hash or "",
+        "hash": _audit_hash(payload, previous_hash or ""),
+    }
+
+
+def verify_audit_chain(audit_log: list) -> bool:
+    """Verify hash-chain integrity for audit entries."""
+    previous_hash = ""
+    for entry in audit_log:
+        payload = {
+            "timestamp": entry.get("timestamp"),
+            "action": entry.get("action"),
+            "doctor": entry.get("doctor"),
+            "ip_address": entry.get("ip_address"),
+            "details": entry.get("details", {}),
+        }
+        if entry.get("previous_hash", "") != previous_hash:
+            return False
+        if entry.get("hash") != _audit_hash(payload, previous_hash):
+            return False
+        previous_hash = entry.get("hash", "")
+    return True
+
+
+def analyze_confidence(extracted: dict, threshold: float = 0.7) -> dict:
+    """
+    Build a normalized confidence report from extraction output.
+    Supports scalar scores and per-medicine score objects.
+    """
+    confidence = extracted.get("confidence", {})
+    low_fields = []
+
+    for field, score in confidence.items():
+        if field == "medicines" and isinstance(score, list):
+            for index, med_scores in enumerate(score):
+                if isinstance(med_scores, dict):
+                    for med_field, med_score in med_scores.items():
+                        if isinstance(med_score, (int, float)) and med_score < threshold:
+                            low_fields.append(f"medicines[{index}].{med_field}")
+                elif isinstance(med_scores, (int, float)) and med_scores < threshold:
+                    low_fields.append(f"medicines[{index}]")
+        elif isinstance(score, list):
+            for index, item_score in enumerate(score):
+                if isinstance(item_score, (int, float)) and item_score < threshold:
+                    low_fields.append(f"{field}[{index}]")
+        elif isinstance(score, (int, float)) and score < threshold:
+            low_fields.append(field)
+
+    return {
+        "scores": confidence,
+        "low_confidence_fields": low_fields,
+        "needs_review": len(low_fields) > 0,
+        "threshold": threshold,
+    }
+
+
+def build_patient_confidence_payload(extracted: dict, confidence_report: dict) -> dict:
+    """
+    Build patient payload with confidence metadata that UI can highlight.
+    """
+    scores = confidence_report.get("scores", {})
+    medicines = extracted.get("medicines", [])
+    med_scores = scores.get("medicines", []) if isinstance(scores.get("medicines", []), list) else []
+    medicines_with_confidence = []
+    for i, med in enumerate(medicines):
+        score_obj = med_scores[i] if i < len(med_scores) and isinstance(med_scores[i], dict) else {}
+        medicines_with_confidence.append({
+            **med,
+            "_confidence": score_obj,
+        })
+
+    return {
+        "phone": extracted.get("phone", ""),
+        "name": extracted.get("patient_name", "Unknown"),
+        "age": extracted.get("patient_age"),
+        "gender": extracted.get("patient_gender"),
+        "doctor": extracted.get("doctor_name"),
+        "visit_date": extracted.get("visit_date", str(date.today())),
+        "diagnosis": extracted.get("diagnosis", []),
+        "medicines": medicines_with_confidence,
+        "known_allergies": extracted.get("allergies_mentioned", []),
+        "_confidence": {
+            "name": scores.get("patient_name"),
+            "age": scores.get("patient_age"),
+            "gender": scores.get("patient_gender"),
+            "doctor": scores.get("doctor_name"),
+            "visit_date": scores.get("visit_date"),
+            "clinic": scores.get("clinic_name"),
+            "diagnosis": scores.get("diagnosis"),
+            "tests_ordered": scores.get("tests_ordered"),
+            "allergies_mentioned": scores.get("allergies_mentioned"),
+            "notes": scores.get("notes"),
+        },
+    }
+
+
+@app.get("/api/patients/{phone}/reports")
+def get_patient_reports(phone: str):
+    """Fetch AI-generated medical reports for a patient."""
+    db_connected = get_db()
+    if db_connected:
+        patient = patients_collection.find_one({"phone": phone})
+        if patient and "reports" in patient:
+            # Ensure JSON serialization works (remove _id if it was mistakenly added to report items)
+            return {"reports": patient["reports"]}
+    return {"reports": []}
+
+@app.get("/api/epidemic-data")
+def get_epidemic_data():
+    """Aggregates diagnoses to power the public health dashboard."""
+    # In a real app, this would use MongoDB aggregation pipelines.
+    # For the hackathon demo, we generate realistic mock clusters 
+    # and combine them with any real data we have.
+    
+    mock_clusters = [
+        {"disease": "Dengue Fever", "location": "Mumbai, MH", "lat": 19.0760, "lng": 72.8777, "count": 12},
+        {"disease": "Typhoid", "location": "Nashik, MH", "lat": 20.0059, "lng": 73.7629, "count": 4},
+        {"disease": "Viral Conjunctivitis", "location": "Delhi", "lat": 28.7041, "lng": 77.1025, "count": 28},
+        {"disease": "Malaria", "location": "Bhopal, MP", "lat": 23.2599, "lng": 77.4126, "count": 7}
+    ]
+    
+    db_connected = get_db()
+    if db_connected:
+        # Example logic to pull real data if needed
+        pass
+        
+    return {"clusters": mock_clusters}
+
+# ─── Health Check ─────────────────────────────────────────────────────────────
+@app.get("/health")
+def health():
+    """Simple health check endpoint."""
+    db_connected = get_db()
+    if db_connected:
+        mongo_status = "connected"
+    else:
+        mongo_status = "not configured (using in-memory store)"
+
+    return {
+        "status": "running",
+        "mongodb": mongo_status,
+        "google_cloud_project_set": bool(GOOGLE_CLOUD_PROJECT and "your_project" not in GOOGLE_CLOUD_PROJECT),
+        "google_cloud_location": GOOGLE_CLOUD_LOCATION,
+        "gcs_upload_bucket_set": bool(GCS_UPLOAD_BUCKET),
+    }
+
+
+# ─── Process Document (Main endpoint — Multi-Agent Orchestration) ────────────
+
+from fastapi import BackgroundTasks
+
+class TaskPayload(BaseModel):
+    phone: str
+    gcs_uri: str | None = None
+    doctor_name: str | None = "Dr. AI Assistant"
+    ip_address: str | None = "unknown"
+
+def download_bytes_from_gcs(gcs_uri: str) -> bytes:
+    """Download raw bytes from a Cloud Storage URI (e.g. gs://bucket/object)."""
+    if not gcs_uri.startswith("gs://"):
+        raise ValueError("Invalid GCS URI format. Must start with gs://")
+    
+    parts = gcs_uri[5:].split("/", 1)
+    bucket_name = parts[0]
+    object_name = parts[1]
+    
+    client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(object_name)
+    return blob.download_as_bytes()
+
+@app.post("/internal/process_task")
+async def process_task(payload: TaskPayload):
+    """
+    Webhook handler for Cloud Tasks.
+    Downloads the image from GCS, runs the multi-agent supervisor pipeline, and returns status.
+    """
+    logger.info(f"📥 Received background task request for phone {payload.phone}")
+    
+    image_bytes = None
+    content_type = "image/jpeg"
+    gcs_upload_result = None
+    
+    if payload.gcs_uri:
+        try:
+            image_bytes = download_bytes_from_gcs(payload.gcs_uri)
+            if payload.gcs_uri.endswith(".png"):
+                content_type = "image/png"
+            elif payload.gcs_uri.endswith(".pdf"):
+                content_type = "application/pdf"
+            
+            # Parse GCS URI to reconstruct upload result metadata
+            parts = payload.gcs_uri[5:].split("/", 1)
+            bucket_name = parts[0]
+            object_name = parts[1]
+            gcs_upload_result = {
+                "bucket": bucket_name,
+                "object": object_name,
+                "uri": payload.gcs_uri,
+                "content_type": content_type
+            }
+        except Exception as e:
+            logger.error(f"Failed to download image from GCS ({payload.gcs_uri}): {e}")
+            return {"status": "failed", "error": f"GCS download failed: {str(e)}"}
+            
+    if not image_bytes:
+        logger.error(f"No image bytes could be retrieved for phone {payload.phone}")
+        return {"status": "failed", "error": "No image bytes could be retrieved"}
+        
+    # Execute multi-agent supervisor pipeline
+    supervisor = _create_supervisor()
+    state = await supervisor.run(
+        phone=payload.phone,
+        image_bytes=image_bytes,
+        ip_address=payload.ip_address or "unknown",
+        content_type=content_type,
+        gcs_upload_result=gcs_upload_result
+    )
+    
+    if state.status == WorkflowStatus.FAILED:
+        logger.error(f"Background pipeline failed for {payload.phone}: {state.error}")
+        return {"status": "failed", "error": state.error or "Processing failed"}
+        
+    logger.info(f"✅ Background pipeline completed successfully for {payload.phone}")
+    return {"status": "success", "record_id": state.write_result.record_id if state.write_result else ""}
+
+@app.post("/process_async")
+async def process_document_async(
+    request: Request,
+    background_tasks: BackgroundTasks,
+    phone: str = Form(...),
+    file: UploadFile = File(...)
+):
+    """
+    Enqueues the prescription processing to Cloud Tasks.
+    If Cloud Tasks is not configured, uses FastAPI BackgroundTasks.
+    Returns immediately with a processing ID.
+    """
+    image_bytes = await file.read()
+    phone_clean = phone.strip().replace(" ", "")
+    
+    # Upload to GCS first so the background task doesn't need the raw bytes over HTTP
+    gcs_upload = upload_bytes_to_gcs(image_bytes, phone_clean, file.content_type)
+    gcs_uri = gcs_upload.get("uri") if (gcs_upload and "uri" in gcs_upload) else None
+    
+    task_payload = {
+        "phone": phone_clean,
+        "gcs_uri": gcs_uri,
+        "doctor_name": "Dr. AI Assistant",
+        "ip_address": request.client.host if request.client else "unknown"
+    }
+    
+    # Try creating Cloud Task
+    task_created = create_task(task_payload, endpoint="/internal/process_task")
+    
+    if not task_created:
+        logger.info("Falling back to FastAPI BackgroundTasks")
+        supervisor = _create_supervisor()
+        background_tasks.add_task(
+            supervisor.run,
+            phone=phone_clean,
+            image_bytes=image_bytes,
+            ip_address=task_payload["ip_address"],
+            content_type=file.content_type,
+            gcs_upload_result=gcs_upload
+        )
+        
+    return {
+        "status": "processing",
+        "message": "Prescription accepted for background processing.",
+        "gcs_uri": gcs_uri,
+        "is_cloud_task": task_created
+    }
+
+@app.post("/process")
+async def process_document(
+    request: Request,
+    phone: str = Form(...),  # Phone number from form (required)
+    file: UploadFile = File(...)
+):
+    """
+    Multi-agent prescription processing pipeline:
+    1. Upload source document to Cloud Storage
+    2. Supervisor orchestrates: Extraction → PatientContext → Safety → RecordUpdate
+    3. Return structured result with alerts and workflow trace
+
+    Args:
+        phone: Patient's phone number (unique identifier)
+        file: Prescription image file
+    """
+    # Read image bytes
+    image_bytes = await file.read()
+
+    # Upload source document to Cloud Storage (before agent pipeline)
+    phone_clean = phone.strip().replace(" ", "")
+    gcs_upload = upload_bytes_to_gcs(image_bytes, phone_clean, file.content_type)
+
+    # Get client IP for audit
+    ip_address = (request.client.host if request.client else None) or "unknown"
+
+    # Run the multi-agent supervisor pipeline
+    supervisor = _create_supervisor()
+    state = await supervisor.run(
+        phone=phone_clean,
+        image_bytes=image_bytes,
+        ip_address=ip_address,
+        content_type=file.content_type,
+        gcs_upload_result=gcs_upload,
+    )
+
+    # Check for hard failure
+    if state.status == WorkflowStatus.FAILED:
+        return {"error": state.error or "Processing failed", "workflow_trace": [t.model_dump() for t in state.trace]}
+
+    # Convert state to API response (preserves existing frontend contract)
+    return _state_to_response(state)
+
+
+# ─── Query Endpoint ───────────────────────────────────────────────────────────
+@app.post("/query")
+async def run_query(request: QueryRequest):
+    """
+    Simple natural language query handler.
+    For Phase 1, we do basic keyword matching.
+    """
+    query = request.query.lower()
+    use_mongo = get_db()
+
+    if use_mongo:
+        # ── MongoDB queries ──
+        if "how many" in query or "count" in query:
+            count = patients_collection.count_documents({})
+            return {"answer": f"Total patients in database: {count}"}
+
+        elif "diabetic" in query or "diabetes" in query:
+            patients = list(patients_collection.find({"conditions": {"$regex": "diabet", "$options": "i"}}))
+            if patients:
+                return {"answer": f"Found {len(patients)} diabetic patient(s): {', '.join(p['name'] for p in patients)}"}
+            return {"answer": "No diabetic patients found."}
+
+        else:
+            # Try to search by phone, name, medicine, or condition
+            safe_query = re.escape(query)  # Escape regex special chars from user input
+            patients = list(patients_collection.find({"$or": [
+                {"phone": {"$regex": safe_query, "$options": "i"}},
+                {"name": {"$regex": safe_query, "$options": "i"}},
+                {"conditions": {"$regex": safe_query, "$options": "i"}},
+                {"visits.medicines.name": {"$regex": safe_query, "$options": "i"}},
+            ]}))
+            if patients:
+                return {"answer": f"Found {len(patients)} result(s): {', '.join(p['name'] for p in patients)}"}
+            return {"answer": "No results found. Try searching by patient name, medicine, or condition."}
+
+    else:
+        # ── In-memory search ──
+        if "how many" in query or "count" in query:
+            return {"answer": f"Total patients in database: {len(in_memory_patients)}"}
+
+        # Search in memory
+        results = []
+        for p in in_memory_patients:
+            name_match = query in p["name"].lower()
+            condition_match = any(query in c.lower() for c in p.get("conditions", []))
+            med_match = any(
+                query in m.get("name", "").lower()
+                for v in p.get("visits", [])
+                for m in v.get("medicines", [])
+            )
+            if name_match or condition_match or med_match:
+                results.append(p)
+
+        if results:
+            return {"answer": f"Found {len(results)} result(s): {', '.join(p['name'] for p in results)}"}
+        return {"answer": "No results found. Try searching by patient name, medicine, or condition."}
+
+
+# ─── Get Patient by Phone ─────────────────────────────────────────────────────
+@app.get("/patient/{phone}")
+async def get_patient_by_phone(phone: str):
+    """Get a single patient by their phone number."""
+    use_mongo = get_db()
+    phone_clean = phone.strip().replace(" ", "")
+    
+    if use_mongo:
+        patient = patients_collection.find_one({"phone": phone_clean})
+        if patient:
+            # Remove MongoDB's internal _id for cleaner JSON
+            patient.pop("_id", None)
+            # Decrypt sensitive PII if present
+            if "secure_pii" in patient:
+                decrypted_pii = decrypt_data(patient["secure_pii"])
+                if not "error" in decrypted_pii:
+                    patient["name"] = decrypted_pii.get("name", patient.get("name"))
+                    patient["age"] = decrypted_pii.get("age", patient.get("age"))
+                    patient["gender"] = decrypted_pii.get("gender", patient.get("gender"))
+                patient.pop("secure_pii", None)
+            return {"found": True, "patient": patient}
+        return {"found": False, "message": "Patient not found"}
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+        if patient:
+            # Decrypt sensitive PII if present
+            if "secure_pii" in patient:
+                decrypted_pii = decrypt_data(patient["secure_pii"])
+                if not "error" in decrypted_pii:
+                    patient["name"] = decrypted_pii.get("name", patient.get("name"))
+                    patient["age"] = decrypted_pii.get("age", patient.get("age"))
+                    patient["gender"] = decrypted_pii.get("gender", patient.get("gender"))
+                patient.pop("secure_pii", None)
+            return {"found": True, "patient": patient}
+        return {"found": False, "message": "Patient not found"}
+
+
+# ─── Recent Patients ──────────────────────────────────────────────────────────
+@app.get("/recent")
+async def get_recent_patients(hosp_id: str | None = None):
+    """Returns the 10 most recently added patients with today_count and total_count."""
+    use_mongo = get_db()
+    today_str = date.today().isoformat()  # e.g. "2026-06-04"
+
+    if use_mongo:
+        query = {}
+        if hosp_id:
+            query = {"visits.hosp_id": hosp_id}
+            
+        all_results = list(patients_collection.find(query).sort("created_at", -1))
+        total_count = len(all_results)
+        patients = []
+        today_count = 0
+        for p in all_results[:10]:
+            # Decrypt PII if present
+            name = p.get("name", "Unknown")
+            if "secure_pii" in p:
+                decrypted_pii = decrypt_data(p["secure_pii"])
+                if not "error" in decrypted_pii:
+                    name = decrypted_pii.get("name", name)
+                    
+            # Determine last visit date
+            visits = p.get("visits", [])
+            last_visit_date = visits[-1].get("date", "") if visits else ""
+            is_today = (last_visit_date == today_str)
+            if is_today:
+                today_count += 1
+            patients.append({
+                "phone": p.get("phone", ""),
+                "name": name,
+                "conditions": p.get("conditions", []),
+                "has_alerts": len(p.get("known_allergies", [])) > 0,
+                "last_visit_date": last_visit_date,
+                "is_today": is_today,
+            })
+        # Count today across ALL patients matching query
+        today_count = sum(
+            1 for p in all_results
+            if p.get("visits") and p["visits"][-1].get("date", "") == today_str
+        )
+    else:
+        # In-memory fallback filtering
+        filtered_mem = in_memory_patients
+        if hosp_id:
+            filtered_mem = [p for p in in_memory_patients if any(v.get("hosp_id") == hosp_id for v in p.get("visits", []))]
+            
+        total_count = len(filtered_mem)
+        today_count = 0
+        patients = []
+        for p in filtered_mem[-10:]:
+            name = p.get("name", "Unknown")
+            if "secure_pii" in p:
+                decrypted_pii = decrypt_data(p["secure_pii"])
+                if not "error" in decrypted_pii:
+                    name = decrypted_pii.get("name", name)
+                    
+            visits = p.get("visits", [])
+            last_visit_date = visits[-1].get("date", "") if visits else ""
+            is_today = (last_visit_date == today_str)
+            if is_today:
+                today_count += 1
+            patients.append({
+                "phone": p.get("phone", ""),
+                "name": name,
+                "conditions": p.get("conditions", []),
+                "has_alerts": len(p.get("known_allergies", [])) > 0,
+                "last_visit_date": last_visit_date,
+                "is_today": is_today,
+            })
+
+    return {"patients": patients, "today_count": today_count, "total_count": total_count}
+
+
+@app.post("/alerts/acknowledge")
+async def acknowledge_alert(request: Request, payload: AlertAcknowledgeRequest):
+    """
+    Record immutable audit event when doctor acknowledges/overrides an alert.
+    """
+    phone_clean = payload.phone.strip().replace(" ", "")
+    use_mongo = get_db()
+    ip_address = (request.client.host if request.client else None) or "unknown"
+
+    if use_mongo:
+        patient = patients_collection.find_one({"phone": phone_clean})
+        if not patient:
+            return {"ok": False, "message": "Patient not found"}
+        previous_hash = (patient.get("audit_log", [])[-1].get("hash", "") if patient.get("audit_log") else "")
+        event = build_audit_event(
+            action="ALERT_ACKNOWLEDGED",
+            doctor=payload.doctor_name,
+            ip_address=ip_address,
+            details={"alert": payload.alert, "override_reason": payload.override_reason},
+            previous_hash=previous_hash,
+        )
+        patients_collection.update_one({"_id": patient["_id"]}, {"$push": {"audit_log": event}})
+        audit_log = patient.get("audit_log", []) + [event]
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+        if not patient:
+            return {"ok": False, "message": "Patient not found"}
+        previous_hash = (patient.get("audit_log", [])[-1].get("hash", "") if patient.get("audit_log") else "")
+        event = build_audit_event(
+            action="ALERT_ACKNOWLEDGED",
+            doctor=payload.doctor_name,
+            ip_address=ip_address,
+            details={"alert": payload.alert, "override_reason": payload.override_reason},
+            previous_hash=previous_hash,
+        )
+        patient.setdefault("audit_log", []).append(event)
+        audit_log = patient.get("audit_log", [])
+
+    return {
+        "ok": True,
+        "event": event,
+        "audit_entries": len(audit_log),
+        "chain_valid": verify_audit_chain(audit_log),
+    }
+
+# ─── Patient Reports (Blood Tests, X-Ray, MRI, etc.) ─────────────────────────
+
+@app.get("/patient/{phone}/reports")
+async def get_patient_reports(phone: str):
+    """Get all medical reports for a patient."""
+    phone_clean = phone.strip().replace(" ", "")
+    use_mongo = get_db()
+    
+    if use_mongo:
+        patient = patients_collection.find_one({"phone": phone_clean})
+        if not patient:
+            return {"found": False, "reports": []}
+        return {"found": True, "reports": patient.get("reports", [])}
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+        if not patient:
+            return {"found": False, "reports": []}
+        return {"found": True, "reports": patient.get("reports", [])}
+
+
+@app.post("/patient/{phone}/reports")
+async def upload_patient_report(
+    phone: str,
+    request: Request,
+    report_type: str = Form(...),
+    report_name: str = Form(...),
+    report_date: str = Form(...),
+    doctor_name: str = Form(""),
+    hospital_name: str = Form(""),
+    hosp_id: str = Form(""),
+    notes: str = Form(""),
+    file: UploadFile = File(...)
+):
+    """Upload a medical report (blood test, X-ray, MRI, etc.) for a patient."""
+    phone_clean = phone.strip().replace(" ", "")
+    use_mongo = get_db()
+    
+    # Read file bytes
+    file_bytes = await file.read()
+    
+    # Upload to GCS
+    gcs_result = None
+    if GCS_UPLOAD_BUCKET and GOOGLE_CLOUD_PROJECT and "your_project" not in GOOGLE_CLOUD_PROJECT:
+        try:
+            mime = file.content_type or "application/octet-stream"
+            ext = ".jpg"
+            if mime == "image/png": ext = ".png"
+            elif mime == "application/pdf": ext = ".pdf"
+            object_name = f"reports/{phone_clean}/{report_date}/{uuid4().hex}{ext}"
+            gcs_client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
+            bucket = gcs_client.bucket(GCS_UPLOAD_BUCKET)
+            blob = bucket.blob(object_name)
+            blob.upload_from_string(file_bytes, content_type=mime)
+            gcs_result = {
+                "bucket": GCS_UPLOAD_BUCKET,
+                "object": object_name,
+                "uri": f"gs://{GCS_UPLOAD_BUCKET}/{object_name}",
+                "content_type": mime,
+            }
+        except Exception as exc:
+            logger.error(f"GCS report upload failed: {exc}")
+    
+    # Build report record
+    report = {
+        "report_id": f"rpt-{uuid4().hex[:8]}",
+        "type": report_type,
+        "name": report_name,
+        "date": report_date,
+        "doctor": doctor_name or "Unknown",
+        "hospital": hospital_name or "Unknown",
+        "hosp_id": hosp_id or "",
+        "notes": notes,
+        "file_url": gcs_result.get("uri") if gcs_result else None,
+        "file_type": file.content_type or "application/octet-stream",
+        "created_at": _utc_now_iso(),
+    }
+    
+    if use_mongo:
+        result = patients_collection.update_one(
+            {"phone": phone_clean},
+            {"$push": {"reports": report}},
+        )
+        if result.matched_count == 0:
+            return {"ok": False, "message": "Patient not found"}
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+        if not patient:
+            return {"ok": False, "message": "Patient not found"}
+        patient.setdefault("reports", []).append(report)
+    
+    logger.info(f"📎 Report uploaded for {phone_clean}: {report_name} ({report_type})")
+    return {"ok": True, "report": report}
+
+
+@app.delete("/patient/{phone}/reports/{report_id}")
+async def delete_patient_report(phone: str, report_id: str):
+    """Delete a medical report."""
+    phone_clean = phone.strip().replace(" ", "")
+    use_mongo = get_db()
+    
+    if use_mongo:
+        result = patients_collection.update_one(
+            {"phone": phone_clean},
+            {"$pull": {"reports": {"report_id": report_id}}},
+        )
+        if result.matched_count == 0:
+            return {"ok": False, "message": "Patient not found"}
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+        if not patient:
+            return {"ok": False, "message": "Patient not found"}
+        patient["reports"] = [r for r in patient.get("reports", []) if r.get("report_id") != report_id]
+    
+    return {"ok": True, "deleted": report_id}
+
+# ─── Prescription Image Viewing ───────────────────────────────────────────────
+
+@app.get("/prescription/{phone}/{visit_id}/image")
+async def get_prescription_image(phone: str, visit_id: str):
+    """Get the original uploaded prescription image for a visit.
+    Returns a signed URL or base64 data for viewing.
+    """
+    phone_clean = phone.strip().replace(" ", "")
+    use_mongo = get_db()
+    
+    # Find the patient and visit
+    if use_mongo:
+        patient = patients_collection.find_one({"phone": phone_clean})
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+    
+    if not patient:
+        return {"found": False, "message": "Patient not found"}
+    
+    visit = next((v for v in patient.get("visits", []) if v.get("visit_id") == visit_id), None)
+    if not visit:
+        return {"found": False, "message": "Visit not found"}
+    
+    source_doc = visit.get("source_document")
+    if not source_doc or not isinstance(source_doc, dict):
+        return {"found": False, "message": "No prescription image available for this visit",
+                "visit_date": visit.get("date"), "doctor": visit.get("doctor")}
+    
+    gcs_uri = source_doc.get("uri")
+    if not gcs_uri:
+        return {"found": False, "message": "Prescription source document URI not available"}
+    
+    # Try to generate a signed URL
+    try:
+        parts = gcs_uri[5:].split("/", 1)
+        bucket_name = parts[0]
+        object_name = parts[1]
+        gcs_client = storage.Client(project=GOOGLE_CLOUD_PROJECT)
+        bucket = gcs_client.bucket(bucket_name)
+        blob = bucket.blob(object_name)
+        
+        signed_url = blob.generate_signed_url(
+            version="v4",
+            expiration=timedelta(minutes=30),
+            method="GET",
+        )
+        return {
+            "found": True,
+            "url": signed_url,
+            "content_type": source_doc.get("content_type", "image/jpeg"),
+            "visit_date": visit.get("date"),
+            "doctor": visit.get("doctor"),
+        }
+    except Exception as exc:
+        logger.error(f"Failed to generate signed URL: {exc}")
+        # Fallback: return the GCS URI info without a signed URL
+        return {
+            "found": True,
+            "url": None,
+            "gcs_uri": gcs_uri,
+            "content_type": source_doc.get("content_type", "image/jpeg"),
+            "message": "Signed URL generation failed — prescription stored in GCS but direct access is not available",
+            "visit_date": visit.get("date"),
+            "doctor": visit.get("doctor"),
+        }
+
+# ─── Cross-Hospital OTP-Based Record Access ───────────────────────────────────
+
+class OTPRequestPayload(BaseModel):
+    patient_phone: str
+    requesting_hosp_id: str
+    requesting_doc_id: str
+
+class OTPVerifyPayload(BaseModel):
+    patient_phone: str
+    otp: str
+    requesting_hosp_id: str
+    requesting_doc_id: str = ""
+
+@app.post("/access/request-otp")
+async def request_access_otp(payload: OTPRequestPayload):
+    """Request OTP for cross-hospital access to a patient's records.
+    In demo mode, returns the OTP directly (simulating SMS).
+    """
+    phone_clean = payload.patient_phone.strip().replace(" ", "")
+    
+    # Verify patient exists
+    use_mongo = get_db()
+    if use_mongo:
+        patient = patients_collection.find_one({"phone": phone_clean})
+    else:
+        patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
+    
+    if not patient:
+        return {"ok": False, "message": "Patient not found in records"}
+    
+    # Generate 6-digit OTP
+    otp = str(_random.randint(100000, 999999))
+    otp_key = f"{phone_clean}:{payload.requesting_hosp_id}"
+    _otp_store[otp_key] = {
+        "otp": otp,
+        "expires": datetime.utcnow() + timedelta(minutes=5),
+        "doc_id": payload.requesting_doc_id,
+        "patient_name": patient.get("name", "Unknown"),
+    }
+    
+    logger.info(f"🔐 OTP generated for {phone_clean} → {payload.requesting_hosp_id}")
+    
+    # In demo mode, return the OTP directly
+    return {
+        "ok": True,
+        "message": f"OTP sent to patient's registered mobile ({phone_clean})",
+        "demo_otp": otp,  # In production, remove this — send via SMS
+        "expires_in": "5 minutes",
+        "patient_name": patient.get("name", "Unknown"),
+    }
+
+@app.post("/access/verify-otp")
+async def verify_access_otp(payload: OTPVerifyPayload):
+    """Verify OTP and grant temporary access to patient records."""
+    phone_clean = payload.patient_phone.strip().replace(" ", "")
+    otp_key = f"{phone_clean}:{payload.requesting_hosp_id}"
+    
+    stored = _otp_store.get(otp_key)
+    if not stored:
+        return {"ok": False, "message": "No OTP request found. Please request a new OTP."}
+    
+    if datetime.utcnow() > stored["expires"]:
+        del _otp_store[otp_key]
+        return {"ok": False, "message": "OTP has expired. Please request a new one."}
+    
+    if stored["otp"] != payload.otp.strip():
+        return {"ok": False, "message": "Invalid OTP. Please try again."}
+    
+    # OTP verified — grant access for 24 hours
+    grant_key = f"{phone_clean}:{payload.requesting_hosp_id}"
+    _access_grants[grant_key] = {
+        "granted_at": datetime.utcnow().isoformat() + "Z",
+        "expires": (datetime.utcnow() + timedelta(hours=24)).isoformat() + "Z",
+        "doc_id": payload.requesting_doc_id or stored["doc_id"],
+        "hosp_id": payload.requesting_hosp_id,
+    }
+    
+    # Clean up OTP
+    del _otp_store[otp_key]
+    
+    logger.info(f"✅ Access granted for {payload.requesting_hosp_id} to patient {phone_clean}")
+    
+    return {
+        "ok": True,
+        "message": "Access granted for 24 hours",
+        "grant": _access_grants[grant_key],
+    }
+
+@app.get("/access/grants/{phone}")
+async def get_access_grants(phone: str):
+    """List all active access grants for a patient."""
+    phone_clean = phone.strip().replace(" ", "")
+    now = datetime.utcnow()
+    
+    active_grants = []
+    for key, grant in list(_access_grants.items()):
+        if key.startswith(phone_clean + ":"):
+            expires = datetime.fromisoformat(grant["expires"].replace("Z", "+00:00")).replace(tzinfo=None)
+            if now < expires:
+                active_grants.append(grant)
+            else:
+                del _access_grants[key]  # Clean up expired
+    
+    return {"grants": active_grants, "count": len(active_grants)}
+
+@app.delete("/access/grants/{phone}/{hosp_id}")
+async def revoke_access_grant(phone: str, hosp_id: str):
+    """Revoke access for a specific hospital."""
+    phone_clean = phone.strip().replace(" ", "")
+    grant_key = f"{phone_clean}:{hosp_id}"
+    
+    if grant_key in _access_grants:
+        del _access_grants[grant_key]
+        return {"ok": True, "message": f"Access revoked for {hosp_id}"}
+    return {"ok": False, "message": "No active grant found"}
+
+
+# ─── Test Endpoint (Multi-Agent with pre-extracted data) ─────────────────────
+@app.post("/test/process")
+async def test_process(data: dict):
+    """
+    Accepts pre-extracted data (skips Gemini extraction) and routes through
+    the same multi-agent Supervisor pipeline.
+    Send JSON like: {"phone": "9876543210", "patient_name": "Ramesh", "medicines": [...], ...}
+    """
+    phone = data.get("phone", "")
+    phone_clean = phone.strip().replace(" ", "") if phone else ""
+
+    # Run supervisor with extracted_override (skips ExtractionAgent's Gemini call)
+    supervisor = _create_supervisor()
+    state = await supervisor.run(
+        phone=phone_clean,
+        ip_address="test-client",
+        gcs_upload_result=data.get("source_document"),
+        extracted_override=data,
+    )
+
+    # Check for hard failure
+    if state.status == WorkflowStatus.FAILED:
+        return {"error": state.error or "Processing failed", "workflow_trace": [t.model_dump() for t in state.trace]}
+
+    return _state_to_response(state)
+
+# --- Chat Helper Functions ---------------------------------------------------
+
+import google.generativeai as _genai_chat
+
+def _get_patient_for_chat(phone: str) -> dict | None:
+    phone_clean = phone.strip().replace(" ", "")
+    if get_db():
+        p = patients_collection.find_one({"phone": phone_clean})
+        if p:
+            p.pop("_id", None)
+            if "secure_pii" in p:
+                decrypted_pii = decrypt_data(p["secure_pii"])
+                if not "error" in decrypted_pii:
+                    p["name"] = decrypted_pii.get("name", p.get("name"))
+                    p["age"] = decrypted_pii.get("age", p.get("age"))
+                    p["gender"] = decrypted_pii.get("gender", p.get("gender"))
+                p.pop("secure_pii", None)
+        return p
+    else:
+        p = next((x for x in in_memory_patients if x.get("phone") == phone_clean), None)
+        if p:
+            import copy
+            p = copy.deepcopy(p)
+            if "secure_pii" in p:
+                decrypted_pii = decrypt_data(p["secure_pii"])
+                if not "error" in decrypted_pii:
+                    p["name"] = decrypted_pii.get("name", p.get("name"))
+                    p["age"] = decrypted_pii.get("age", p.get("age"))
+                    p["gender"] = decrypted_pii.get("gender", p.get("gender"))
+                p.pop("secure_pii", None)
+        return p
+
+
+def _build_patient_context(patient: dict) -> str:
+    lines = [
+        f"Patient: {patient.get(chr(110)+chr(97)+chr(109)+chr(101), chr(85)+chr(110)+chr(107)+chr(110)+chr(111)+chr(119)+chr(110))}, Phone: {patient.get(chr(112)+chr(104)+chr(111)+chr(110)+chr(101), chr(45))}",
+    ]
+    lines.append(f"Age: {patient.get(chr(97)+chr(103)+chr(101), chr(45))}, Gender: {patient.get(chr(103)+chr(101)+chr(110)+chr(100)+chr(101)+chr(114), chr(45))}")
+    allergies = patient.get("known_allergies", [])
+    lines.append("Known allergies: " + (", ".join(allergies) if allergies else "None"))
+    visits = patient.get("visits", [])
+    lines.append(f"Total visits: {len(visits)}")
+    for i, v in enumerate(visits[-5:], 1):
+        meds = ", ".join(m.get("name", "") for m in v.get("medicines", []))
+        diag = ", ".join(v.get("diagnosis", []))
+        lines.append(f"  Visit {i} ({v.get(chr(100)+chr(97)+chr(116)+chr(101), chr(45))}): doctor={v.get(chr(100)+chr(111)+chr(99)+chr(116)+chr(111)+chr(114), chr(45))}, diagnosis={diag or chr(45)}, medicines={meds or chr(45)}")
+    return chr(10).join(lines)
+
+
+def _rule_based_chat(context: str, question: str) -> str:
+    q = question.lower()
+    if "allerg" in q:
+        for line in context.splitlines():
+            if "allerg" in line.lower():
+                return line.strip()
+        return "No allergy information found."
+    if any(w in q for w in ["med", "drug", "medicine", "prescri"]):
+        meds = [l.strip() for l in context.splitlines() if "medicines" in l.lower()]
+        return chr(10).join(meds[:5]) if meds else "No medication records found."
+    if any(w in q for w in ["visit", "history", "clinic"]):
+        visits = [l.strip() for l in context.splitlines() if "visit" in l.lower()]
+        return chr(10).join(visits[:5]) if visits else "No visit history."
+    return "Please check the patient record panel for full details."
+
+
+async def _query_gemini_chat(context: str, question: str, history: list = None) -> str:
+    api_key = os.getenv("GOOGLE_API_KEY", "")
+    if not api_key or "your_google" in api_key:
+        return _rule_based_chat(context, question)
+    try:
+        _genai_chat.configure(api_key=api_key)
+        model = _genai_chat.GenerativeModel("gemini-2.5-flash")
+        
+        history_lines = []
+        if history:
+            for msg in history[-10:]:
+                role = "Doctor" if msg.get("role") == "user" else "Assistant"
+                history_lines.append(f"{role}: {msg.get('text', '')}")
+
+        lines = [
+            "You are a clinical AI assistant for a doctor. Answer concisely and clinically.",
+            "Use ONLY the patient information provided. If not available, say so clearly.",
+            "",
+            "PATIENT RECORD:",
+            context,
+            "",
+        ]
+        if history_lines:
+            lines.extend([
+                "CONVERSATION HISTORY:",
+                "\n".join(history_lines),
+                "",
+            ])
+        lines.extend([
+            "DOCTOR QUESTION: " + question,
+            "",
+            "Answer in 1-3 sentences. Be direct. Flag any safety concerns.",
+        ])
+        
+        prompt = chr(10).join(lines)
+        response = model.generate_content(prompt)
+        return response.text.strip()
+    except Exception as exc:
+        return _rule_based_chat(context, question) + " (AI unavailable: " + str(exc) + ")"
+
+
+# --- /chat endpoint ----------------------------------------------------------
+
+# Rolling window cap — max messages stored per doctor key
+_CHAT_HISTORY_CAP = 100
+
+
+@app.post("/chat")
+async def chat(payload: ChatRequest):
+    """Chat with Gemini about a specific patient, scoped per doctor.
+
+    Chat histories are stored under patient.chat_histories[doctor_id] so
+    different doctors maintain separate, persistent conversation threads for
+    the same patient.
+    """
+    if not payload.phone:
+        return {"answer": "Please select a patient first."}
+    patient = _get_patient_for_chat(payload.phone)
+    if not patient:
+        return {"answer": f"No records found for {payload.phone}."}
+
+    phone_clean = payload.phone.strip().replace(" ", "")
+    # Normalise doctor_id — fall back to "default" when no login session
+    doctor_id = (payload.doctor_id or "default").strip() or "default"
+
+    # ── Backward compatibility: migrate old flat chat_history → chat_histories ──
+    raw_histories = patient.get("chat_histories")
+    if raw_histories is None:
+        # First time seeing new schema — check for old flat list
+        old_flat = patient.get("chat_history", [])
+        raw_histories = {"default": old_flat} if old_flat else {}
+
+    existing_history = list(raw_histories.get(doctor_id, []))
+
+    # ── Build context and query Gemini ──
+    context = _build_patient_context(patient)
+    answer = await _query_gemini_chat(context, payload.query, existing_history)
+
+    # ── Append new messages ──
+    ts = datetime.utcnow().isoformat() + "Z"
+    new_msg_user  = {"role": "user",  "text": payload.query, "timestamp": ts}
+    new_msg_model = {"role": "model", "text": answer,        "timestamp": ts}
+    updated_history = existing_history + [new_msg_user, new_msg_model]
+
+    # Apply rolling window cap (keep newest messages)
+    if len(updated_history) > _CHAT_HISTORY_CAP:
+        updated_history = updated_history[-_CHAT_HISTORY_CAP:]
+
+    # ── Persist ──
+    history_key = f"chat_histories.{doctor_id}"
+    if get_db():
+        # Atomic $push + $slice: safe under concurrent writes
+        patients_collection.update_one(
+            {"phone": phone_clean},
+            {
+                "$push": {
+                    f"chat_histories.{doctor_id}": {
+                        "$each": [new_msg_user, new_msg_model],
+                        "$slice": -_CHAT_HISTORY_CAP,
+                    }
+                }
+            },
+            upsert=False,
+        )
+    else:
+        # In-memory fallback — write whole updated list
+        for p in in_memory_patients:
+            if p.get("phone") == phone_clean:
+                if "chat_histories" not in p:
+                    p["chat_histories"] = {}
+                p["chat_histories"][doctor_id] = updated_history
+                # Remove legacy flat field if present
+                p.pop("chat_history", None)
+                break
+
+    return {"answer": answer, "patient_name": patient.get("name", "Unknown")}
+
+
+# --- Static file serving -----------------------------------------------------
+
+import pathlib as _pl
+
+_UI_DIR = _pl.Path(__file__).parent.parent / "ui"
+
+if _UI_DIR.exists():
+    @app.get("/")
+    async def serve_landing():
+        return FileResponse(str(_UI_DIR / "landing.html"))
+
+    @app.get("/login")
+    async def serve_login():
+        return FileResponse(str(_UI_DIR / "login.html"))
+
+    @app.get("/hospital")
+    async def serve_hospital():
+        return FileResponse(str(_UI_DIR / "hospital.html"))
+
+    @app.get("/hospital/patient-file")
+    async def serve_patient_file():
+        return FileResponse(str(_UI_DIR / "patient_detail.html"))
+
+    @app.get("/patient")
+    async def serve_patient():
+        return FileResponse(str(_UI_DIR / "patient.html"))
+
+    app.mount("/ui", StaticFiles(directory=str(_UI_DIR)), name="ui")

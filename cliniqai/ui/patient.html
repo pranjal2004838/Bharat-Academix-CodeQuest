@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CliniqAI — Patient Neural Record</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+  <style>
+    body {
+      background: #0B0C10;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+    }
+    
+    .heading-font { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Red Alert Header */
+    .header-alert {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(11, 12, 16, 0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      padding: 1.5rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.3s;
+    }
+
+    .header-alert.danger {
+      box-shadow: inset 0 2px 20px rgba(220, 38, 38, 0.2), 0 10px 30px rgba(220, 38, 38, 0.1);
+      border-bottom: 1px solid rgba(220, 38, 38, 0.4);
+      animation: pulse-red 2s infinite alternate;
+    }
+
+    @keyframes pulse-red {
+      0% { box-shadow: inset 0 2px 20px rgba(220, 38, 38, 0.1); }
+      100% { box-shadow: inset 0 2px 40px rgba(220, 38, 38, 0.3); }
+    }
+
+    /* Neural Timeline */
+    .timeline-container {
+      position: relative;
+      max-width: 800px;
+      margin: 4rem auto;
+      padding: 0 2rem;
+    }
+
+    .neural-line {
+      position: absolute;
+      left: 50%; top: 0; bottom: 0;
+      width: 2px;
+      background: rgba(255,255,255,0.1);
+      transform: translateX(-50%);
+      z-index: 0;
+    }
+
+    .neural-progress {
+      position: absolute;
+      top: 0; left: 0; width: 100%;
+      background: #10B981;
+      box-shadow: 0 0 15px #10B981, 0 0 30px #10B981;
+      height: 0%;
+      transition: height 0.1s;
+    }
+
+    /* Timeline Nodes */
+    .node-wrapper {
+      position: relative;
+      margin-bottom: 6rem;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 10;
+    }
+
+    .node-content {
+      width: 45%;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 2rem;
+      opacity: 0.3;
+      transform: scale(0.9);
+      transition: all 0.6s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    
+    .node-wrapper.active .node-content {
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+      border-color: rgba(255,255,255,0.2);
+    }
+
+    .node-wrapper:nth-child(even) { flex-direction: row-reverse; }
+    
+    .node-center {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 20px; height: 20px;
+      background: #0B0C10;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      transition: all 0.4s;
+    }
+    .node-wrapper.active .node-center {
+      border-color: #10B981;
+      background: #10B981;
+      box-shadow: 0 0 20px #10B981;
+    }
+
+    /* SVG Conflict Mapping (Minority Report Style) */
+    #conflict-canvas {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 5;
+    }
+
+    .conflict-path {
+      stroke: #DC2626;
+      stroke-width: 3;
+      fill: none;
+      stroke-dasharray: 10 10;
+      animation: dashMove 1s linear infinite;
+      filter: drop-shadow(0 0 8px rgba(220, 38, 38, 0.8));
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+    @keyframes dashMove { to { stroke-dashoffset: -20; } }
+
+    /* Micro-interactions */
+    .pill {
+      display: inline-block;
+      padding: 0.4rem 0.8rem;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .pill.danger {
+      background: rgba(220,38,38,0.1);
+      border-color: rgba(220,38,38,0.3);
+      color: #FCA5A5;
+    }
+    
+    /* Drug elements to track for conflicts */
+    .drug-item {
+      position: relative;
+      display: inline-block;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Sticky Red Alert Header -->
+  <header class="header-alert danger" id="main-header">
+    <div class="flex items-center gap-4">
+      <div class="w-12 h-12 bg-white/10 rounded-full flex items-center justify-center font-bold text-xl heading-font border border-white/20">
+        PD
+      </div>
+      <div>
+        <h1 class="text-2xl font-black heading-font tracking-tight">Priya Das</h1>
+        <div class="text-sm text-gray-400">ID: +91 98765 43210</div>
+      </div>
+    </div>
+    
+    <div class="text-right">
+      <div class="text-red-400 font-bold tracking-widest text-xs uppercase flex items-center gap-2 justify-end">
+        <span class="w-2 h-2 bg-red-500 rounded-full animate-ping"></span>
+        CRITICAL CONFLICT DETECTED
+      </div>
+      <div class="text-sm font-medium mt-1">GI Bleeding Risk (Severity: HIGH)</div>
+    </div>
+  </header>
+
+  <!-- Neural Timeline -->
+  <main class="timeline-container relative">
+    
+    <!-- SVG Canvas for Conflict Lines -->
+    <svg id="conflict-canvas">
+      <path id="conflict-line" class="conflict-path" d="M 0,0 C 0,0 0,0 0,0" />
+    </svg>
+
+    <div class="neural-line">
+      <div class="neural-progress" id="progress-bar"></div>
+    </div>
+
+    <!-- AI Reports Container -->
+    <div id="ai-reports-container"></div>
+
+    <!-- Timeline Nodes -->
+    
+    <!-- Node 1: Latest Visit -->
+    <div class="node-wrapper gs-node">
+      <div class="node-center"></div>
+      <div class="node-content">
+        <div class="text-emerald-500 text-xs font-bold tracking-widest uppercase mb-2">March 15 · Dr. Gupta</div>
+        <h3 class="text-xl font-bold mb-4 heading-font">Joint Pain Checkup</h3>
+        
+        <div class="space-y-3">
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Diagnosis</div>
+            <div class="pill">Mild Arthritis</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Prescribed</div>
+            <!-- ID target for conflict line -->
+            <div class="drug-item pill danger" id="drug-ibuprofen">Ibuprofen 400mg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 2: Previous Visit -->
+    <div class="node-wrapper gs-node">
+      <div class="node-center"></div>
+      <div class="node-content">
+        <div class="text-amber-500 text-xs font-bold tracking-widest uppercase mb-2">March 10 · City Hospital</div>
+        <h3 class="text-xl font-bold mb-4 heading-font">Blood Pressure Mgmt</h3>
+        
+        <div class="space-y-3">
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Diagnosis</div>
+            <div class="pill">Hypertension</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Prescribed</div>
+            <div class="pill mr-2">Lisinopril 10mg</div>
+            <!-- ID target for conflict line -->
+            <div class="drug-item pill danger" id="drug-aspirin">Aspirin 75mg</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Node 3: Oldest Visit -->
+    <div class="node-wrapper gs-node">
+      <div class="node-center"></div>
+      <div class="node-content">
+        <div class="text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">March 5 · Rural Clinic</div>
+        <h3 class="text-xl font-bold mb-4 heading-font">Respiratory Infection</h3>
+        
+        <div class="space-y-3">
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Diagnosis</div>
+            <div class="pill">Bronchitis</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Prescribed</div>
+            <div class="pill">Amoxicillin 500mg</div>
+            <div class="pill">Cough Syrup</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Floating Back Button -->
+  <a href="hospital.html" class="fixed bottom-8 left-8 w-12 h-12 bg-white/5 backdrop-blur border border-white/10 rounded-full flex items-center justify-center hover:bg-white/10 transition z-50">
+    <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </a>
+
+  <script>
+    gsap.registerPlugin(ScrollTrigger);
+
+    // 1. Neural Progress Line
+    window.addEventListener('scroll', () => {
+      const scrollPx = document.documentElement.scrollTop;
+      const winHeightPx = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+      const scrollLen = (scrollPx / winHeightPx) * 100;
+      document.getElementById('progress-bar').style.height = scrollLen + "%";
+    });
+
+    // 2. Node Blooming on Scroll
+    const nodes = document.querySelectorAll('.gs-node');
+    nodes.forEach(node => {
+      ScrollTrigger.create({
+        trigger: node,
+        start: "top 60%", // triggers when top of node hits 60% down the viewport
+        end: "bottom 40%",
+        toggleClass: "active",
+        onEnter: () => drawConflictLines(), // Recalculate line on scroll
+        onEnterBack: () => drawConflictLines(),
+      });
+    });
+
+    // 3. Dynamic SVG Bezier Curve for Drug Conflicts
+    function drawConflictLines() {
+      const svg = document.getElementById('conflict-canvas');
+      const path = document.getElementById('conflict-line');
+      
+      const el1 = document.getElementById('drug-ibuprofen');
+      const el2 = document.getElementById('drug-aspirin');
+
+      if(!el1 || !el2) return;
+
+      // Check if both nodes containing these drugs are active/visible
+      const node1Active = el1.closest('.node-wrapper').classList.contains('active');
+      const node2Active = el2.closest('.node-wrapper').classList.contains('active');
+
+      if(node1Active || node2Active) {
+        // Get relative coordinates
+        const rect1 = el1.getBoundingClientRect();
+        const rect2 = el2.getBoundingClientRect();
+        
+        // Canvas is positioned relative to body, but timeline-container has margin.
+        // We need absolute document coordinates relative to the SVG.
+        const svgRect = svg.getBoundingClientRect();
+
+        const x1 = (rect1.left + rect1.width/2) - svgRect.left;
+        const y1 = (rect1.top + rect1.height/2) - svgRect.top;
+        
+        const x2 = (rect2.left + rect2.width/2) - svgRect.left;
+        const y2 = (rect2.top + rect2.height/2) - svgRect.top;
+
+        // Draw Bezier Curve (Cubic)
+        // Control points pulled outward horizontally to create an arc
+        const cp1x = x1 - 200;
+        const cp1y = y1 + (y2 - y1) * 0.2;
+        const cp2x = x2 + 200;
+        const cp2y = y2 - (y2 - y1) * 0.2;
+
+        path.setAttribute('d', `M ${x1},${y1} C ${cp1x},${cp1y} ${cp2x},${cp2y} ${x2},${y2}`);
+        path.style.opacity = '1';
+      } else {
+        path.style.opacity = '0';
+      }
+    }
+
+    // Initialize line on load and resize
+    window.addEventListener('load', () => {
+      drawConflictLines();
+      fetchAIReports();
+    });
+    window.addEventListener('resize', drawConflictLines);
+
+    // Fetch and render AI Reports
+    async function fetchAIReports() {
+      try {
+        const response = await fetch('/api/patients/9876543210/reports');
+        const data = await response.json();
+        const reportsContainer = document.getElementById('ai-reports-container');
+        
+        if (data.reports && data.reports.length > 0) {
+          let html = '';
+          data.reports.forEach((report, index) => {
+            const isEven = index % 2 !== 0; // Toggle side
+            html += `
+            <div class="node-wrapper gs-node active" style="flex-direction: ${isEven ? 'row-reverse' : 'row'};">
+              <div class="node-center" style="border-color: #3B82F6; background: #3B82F6; box-shadow: 0 0 20px #3B82F6;"></div>
+              <div class="node-content" style="border-color: rgba(59, 130, 246, 0.4); opacity: 1; transform: scale(1);">
+                <div class="text-blue-400 text-xs font-bold tracking-widest uppercase mb-2">${report.date || 'RECENT'} · ${report.doctor || 'AI GENERATED REPORT'}</div>
+                <h3 class="text-xl font-bold mb-4 heading-font">${report.type}</h3>
+                <div class="text-sm text-gray-300 mb-4 bg-white/5 p-3 rounded border border-white/10 italic">
+                  "${report.summary}"
+                </div>
+                <div>
+                  <div class="text-xs text-gray-500 mb-1 uppercase tracking-wide">Detailed Analysis</div>
+                  <pre class="text-xs text-gray-400 whitespace-pre-wrap font-mono">${report.details}</pre>
+                </div>
+              </div>
+            </div>`;
+          });
+          reportsContainer.innerHTML = html;
+          // Refresh scroll trigger triggers
+          ScrollTrigger.refresh();
+        }
+      } catch (err) {
+        console.error('Failed to load reports:', err);
+      }
+    }
+
+    // Minor hover effect on header to simulate interactivity
+    document.getElementById('main-header').addEventListener('mouseenter', function() {
+      gsap.to(this, { y: 2, duration: 0.2 });
+    });
+    document.getElementById('main-header').addEventListener('mouseleave', function() {
+      gsap.to(this, { y: 0, duration: 0.2 });
+    });
+
+  </script>
+</body>
+</html>

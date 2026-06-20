@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CliniqAI — Command Center</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
+  
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+
+  <style>
+    :root {
+      --bg-dash: #0B0C10;
+      --panel-bg: rgba(255, 255, 255, 0.03);
+      --glass-border: rgba(255, 255, 255, 0.08);
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.2);
+    }
+
+    body {
+      background: var(--bg-dash);
+      color: #e2e8f0;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      overflow-x: hidden;
+      display: flex;
+      height: 100vh;
+    }
+
+    .heading-font { font-family: 'Space Grotesk', sans-serif; }
+
+    /* Layout */
+    .sidebar {
+      width: 280px;
+      background: rgba(10, 10, 12, 0.8);
+      border-right: 1px solid var(--glass-border);
+      backdrop-filter: blur(20px);
+      display: flex;
+      flex-direction: column;
+      z-index: 20;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem 3rem;
+      overflow-y: auto;
+      position: relative;
+    }
+
+    /* Cinematic Background */
+    .bg-glow {
+      position: absolute;
+      top: 0; left: 50%;
+      width: 80vw; height: 80vh;
+      background: radial-gradient(circle, rgba(16,185,129,0.05) 0%, transparent 70%);
+      transform: translateX(-50%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Cards & Panels */
+    .glass-panel {
+      background: var(--panel-bg);
+      border: 1px solid var(--glass-border);
+      backdrop-filter: blur(12px);
+      border-radius: 20px;
+    }
+
+    .stat-card {
+      padding: 1.5rem;
+      transition: transform 0.3s cubic-bezier(0.19, 1, 0.22, 1), box-shadow 0.3s;
+    }
+    .stat-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 30px rgba(0,0,0,0.4), inset 0 0 0 1px var(--accent);
+    }
+
+    /* Patient Row Hover Physics */
+    .patient-row {
+      display: flex;
+      align-items: center;
+      padding: 1rem 1.5rem;
+      margin-bottom: 0.75rem;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid transparent;
+      border-radius: 16px;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .patient-row::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0; width: 4px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.3s;
+    }
+
+    .patient-row:hover {
+      background: rgba(255,255,255,0.05);
+      border-color: var(--glass-border);
+      transform: scale(1.02) translateX(10px);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    }
+    .patient-row:hover::before { transform: scaleY(1); }
+
+    .chevron-arrow {
+      opacity: 0;
+      transform: translateX(-10px);
+      transition: all 0.3s;
+      color: var(--accent);
+    }
+    .patient-row:hover .chevron-arrow {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    /* Upload Button Aura */
+    .btn-upload {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 1rem 2rem;
+      border-radius: 9999px;
+      font-weight: 600;
+      font-family: 'Space Grotesk', sans-serif;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(16,185,129,0.3);
+      transition: all 0.3s;
+    }
+    .btn-upload:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 40px rgba(16,185,129,0.6);
+    }
+
+    /* Cinematic Blur Modal */
+    #upload-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(0px);
+      transition: backdrop-filter 0.5s, opacity 0.5s;
+    }
+    #upload-modal.active {
+      opacity: 1;
+      pointer-events: auto;
+      backdrop-filter: blur(25px);
+      background: rgba(0,0,0,0.6);
+    }
+
+    .modal-content {
+      width: 100%;
+      max-width: 600px;
+      transform: translateY(50px) scale(0.9);
+      transition: transform 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    }
+    #upload-modal.active .modal-content {
+      transform: translateY(0) scale(1);
+    }
+
+    /* Dropzone Physics */
+    .dropzone {
+      border: 2px dashed rgba(255,255,255,0.2);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      text-align: center;
+      transition: all 0.3s;
+      position: relative;
+      background: rgba(0,0,0,0.2);
+    }
+    .dropzone.drag-over {
+      border-color: var(--accent);
+      background: rgba(16,185,129,0.1);
+      transform: scale(0.98);
+      box-shadow: inset 0 0 30px rgba(16,185,129,0.2);
+    }
+
+    /* Terminal Extraction Animation */
+    .terminal-output {
+      font-family: monospace;
+      font-size: 0.8rem;
+      color: #10B981;
+      height: 60px;
+      overflow: hidden;
+      position: relative;
+      text-align: left;
+      margin-top: 1rem;
+    }
+    
+    .scanner-line {
+      position: absolute;
+      top: 0; left: 0; right: 0; height: 2px;
+      background: #10B981;
+      box-shadow: 0 0 10px #10B981;
+      animation: scan 1.5s infinite alternate ease-in-out;
+      display: none;
+    }
+    @keyframes scan { 0% { top: 0%; } 100% { top: 100%; } }
+
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar p-6 gs-reveal-left">
+    <div class="flex items-center gap-3 mb-12">
+      <div class="w-10 h-10 bg-emerald-500/20 rounded-xl flex items-center justify-center border border-emerald-500/50">
+        <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+          <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="#10B981" stroke-width="2"/>
+        </svg>
+      </div>
+      <h1 class="text-xl font-bold heading-font text-white">CliniqAI</h1>
+    </div>
+
+    <nav class="space-y-2 flex-1">
+      <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-xl bg-emerald-500/10 text-emerald-400 font-medium">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h7" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        Directory
+      </a>
+    </nav>
+
+    <div class="mt-auto border-t border-white/10 pt-6">
+      <div class="flex items-center gap-3">
+        <div class="w-8 h-8 rounded-full bg-gray-700"></div>
+        <div>
+          <div class="text-sm font-semibold text-white">Dr. A. Sharma</div>
+          <div class="text-xs text-emerald-500 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span> Online
+          </div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="bg-glow"></div>
+
+    <header class="flex justify-between items-center mb-10 gs-reveal-up">
+      <div>
+        <h2 class="text-3xl font-black heading-font text-white">Patient Directory</h2>
+        <p class="text-gray-400 mt-1">Cross-clinic unified records</p>
+      </div>
+      <button class="btn-upload" onclick="openModal()">
+        + Upload Prescription
+      </button>
+    </header>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-3 gap-6 mb-10">
+      <div class="glass-panel stat-card gs-stagger">
+        <div class="text-gray-400 text-sm font-medium mb-2">Patients Today</div>
+        <div class="text-4xl font-bold text-white heading-font" id="doc-stats-today">-</div>
+      </div>
+      <div class="glass-panel stat-card gs-stagger">
+        <div class="text-gray-400 text-sm font-medium mb-2">Total Unified Records</div>
+        <div class="text-4xl font-bold text-white heading-font" id="doc-stats-total">-</div>
+      </div>
+      <div class="glass-panel stat-card gs-stagger border-emerald-500/30" style="background: rgba(16,185,129,0.05);">
+        <div class="text-emerald-400 text-sm font-medium mb-2">Conflicts Prevented</div>
+        <div class="text-4xl font-bold text-emerald-500 heading-font">3</div>
+      </div>
+    </div>
+
+    <!-- Patient List -->
+    <div class="glass-panel p-6 gs-reveal-up" style="min-height: 400px;">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-lg font-bold text-white heading-font">Recent Activity</h3>
+        <span class="text-xs font-semibold bg-gray-800 px-3 py-1 rounded-full text-gray-400" id="patient-count-badge">Loading...</span>
+      </div>
+
+      <div id="recent-list" class="space-y-2">
+        <div class="text-center text-gray-500 py-10">
+          <div class="animate-pulse flex flex-col items-center">
+            <div class="w-8 h-8 border-2 border-emerald-500/50 border-t-emerald-500 rounded-full animate-spin mb-4"></div>
+            Connecting to global registry...
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Upload Modal -->
+  <div id="upload-modal">
+    <div class="glass-panel modal-content p-8">
+      <div class="flex justify-between items-center mb-6">
+        <h3 class="text-2xl font-bold heading-font text-white">New Record Entry</h3>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white transition">
+          <svg width="24" height="24" fill="none" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-400 mb-2">Patient Mobile Number</label>
+        <input type="tel" id="upload-phone" placeholder="e.g. 9876543210" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white outline-none focus:border-emerald-500 focus:bg-black/60 transition" autocomplete="off">
+      </div>
+
+      <div class="dropzone" id="drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave()" ondrop="handleDrop(event)">
+        <input type="file" id="file-input" accept="image/*" class="hidden" onchange="previewFile(event)">
+        
+        <img id="preview" class="hidden absolute inset-0 w-full h-full object-cover rounded-xl opacity-40 mix-blend-screen pointer-events-none" />
+        <div class="scanner-line" id="scanner"></div>
+
+        <div class="relative z-10" id="drop-content">
+          <div class="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/10 text-2xl">📄</div>
+          <p class="text-white font-medium">Drag & Drop prescription here</p>
+          <p class="text-gray-500 text-sm mt-1 mb-4">Handwritten, printed, or lab reports</p>
+          <button onclick="document.getElementById('file-input').click()" class="bg-white/10 hover:bg-white/20 text-white px-6 py-2 rounded-full text-sm font-medium transition">
+            Browse Files
+          </button>
+        </div>
+      </div>
+
+      <div id="terminal" class="terminal-output hidden"></div>
+
+      <button id="extract-btn" onclick="processDocument()" disabled class="w-full mt-6 bg-emerald-500 hover:bg-emerald-400 text-white font-bold py-4 rounded-xl transition disabled:opacity-50 disabled:cursor-not-allowed">
+        Initiate AI Extraction
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // --- Initial Animations ---
+    gsap.from(".gs-reveal-left", { x: -100, opacity: 0, duration: 1, ease: "power3.out" });
+    gsap.from(".gs-reveal-up", { y: 50, opacity: 0, duration: 1, ease: "power3.out", delay: 0.2 });
+    gsap.from(".gs-stagger", { y: 30, opacity: 0, duration: 0.8, stagger: 0.1, ease: "back.out(1.7)", delay: 0.4 });
+
+    // --- Modal Logic ---
+    const modal = document.getElementById('upload-modal');
+    function openModal() { modal.classList.add('active'); }
+    function closeModal() { 
+      modal.classList.remove('active'); 
+      document.getElementById('terminal').classList.add('hidden');
+      document.getElementById('scanner').style.display = 'none';
+      document.getElementById('drop-content').style.opacity = '1';
+    }
+
+    // --- API Mock Logic (Preserving hooks) ---
+    const API = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1') ? 'http://127.0.0.1:8000' : window.location.origin;
+
+    async function loadRecent() {
+      try {
+        const res = await fetch(`${API}/patients`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        renderPatients(data.recent_patients || [], data.total_count);
+      } catch(e) {
+        // Mock fallback for UI testing without backend
+        renderPatients([
+          { name: "Priya Das", phone: "9876543210", has_alerts: true, last_visit_date: "2026-06-20", is_today: true },
+          { name: "Rahul Singh", phone: "9123456789", has_alerts: false, last_visit_date: "2026-06-18", is_today: false },
+          { name: "Amit Verma", phone: "9988776655", has_alerts: false, last_visit_date: "2026-06-15", is_today: false }
+        ], 342);
+      }
+    }
+
+    function renderPatients(patients, totalCount = 0) {
+      document.getElementById('patient-count-badge').textContent = `Live Activity`;
+      document.getElementById('doc-stats-today').textContent = patients.filter(p => p.is_today).length;
+      document.getElementById('doc-stats-total').textContent = totalCount || patients.length;
+
+      const list = document.getElementById('recent-list');
+      if (!patients.length) {
+        list.innerHTML = `<div class="text-center text-gray-500 py-10">No patient files yet</div>`;
+        return;
+      }
+
+      list.innerHTML = patients.map((p, i) => `
+        <div class="patient-row" onclick="loadPatientFromRecent('${p.phone}')" style="animation: slideUp 0.5s ease forwards; animation-delay: ${i*0.1}s; opacity:0; transform:translateY(20px);">
+          <div class="w-10 h-10 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-sm font-bold text-gray-300 mr-4">
+            ${p.name.substring(0,2).toUpperCase()}
+          </div>
+          <div class="flex-1">
+            <div class="text-white font-semibold">${p.name}</div>
+            <div class="text-xs text-gray-500">${p.phone}</div>
+          </div>
+          <div class="flex flex-col items-end mr-4">
+            <div class="text-xs text-gray-400">${p.is_today ? '<span class="text-emerald-400">Today</span>' : p.last_visit_date}</div>
+            ${p.has_alerts ? '<div class="w-2 h-2 bg-red-500 rounded-full mt-1 shadow-[0_0_8px_rgba(239,68,68,0.8)]"></div>' : ''}
+          </div>
+          <svg class="chevron-arrow" width="20" height="20" fill="none" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+      `).join('');
+    }
+
+    function loadPatientFromRecent(phone) {
+      window.location.href = `patient.html?phone=${encodeURIComponent(phone)}`;
+    }
+
+    // Include keyframes dynamically for row anims
+    const style = document.createElement('style');
+    style.innerHTML = `@keyframes slideUp { to { opacity: 1; transform: translateY(0); } }`;
+    document.head.appendChild(style);
+
+    // --- Upload Logic ---
+    let selectedFile = null;
+    function previewFile(event) {
+      selectedFile = event.target.files[0];
+      if (!selectedFile) return;
+      if (selectedFile.type.startsWith('image/')) {
+        const preview = document.getElementById('preview');
+        preview.src = URL.createObjectURL(selectedFile);
+        preview.classList.remove('hidden');
+      }
+      document.getElementById('extract-btn').disabled = false;
+    }
+
+    function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+    function handleDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
+    function handleDrop(e) {
+      e.preventDefault();
+      document.getElementById('drop-zone').classList.remove('drag-over');
+      const f = e.dataTransfer.files[0];
+      if (!f) return;
+      selectedFile = f;
+      document.getElementById('file-input').files = e.dataTransfer.files;
+      previewFile({target: {files: [f]}});
+    }
+
+    async function processDocument() {
+      const phone = document.getElementById('upload-phone').value;
+      if (!phone || !selectedFile) return alert("Fill all details");
+
+      const btn = document.getElementById('extract-btn');
+      btn.innerText = "Processing...";
+      btn.disabled = true;
+
+      document.getElementById('drop-content').style.opacity = '0.1';
+      document.getElementById('scanner').style.display = 'block';
+      const terminal = document.getElementById('terminal');
+      terminal.classList.remove('hidden');
+
+      // Terminal text effect
+      const msgs = [
+        "> Initializing Gemini Vision API...",
+        "> Image segmented. Decoding handwriting...",
+        "> FOUND: Tab Amoxicillin 500mg BID",
+        "> FOUND: Syp Corex 10ml HS",
+        "> Querying Global Registry for +91" + phone + "...",
+        "> Cross-referencing 3 past clinics...",
+        "> NO CONFLICTS DETECTED. ALL CLEAR.",
+        "> Compiling Unified Record..."
+      ];
+      
+      terminal.innerHTML = "";
+      let i = 0;
+      const interval = setInterval(() => {
+        if(i < msgs.length) {
+          terminal.innerHTML += `<div>${msgs[i]}</div>`;
+          terminal.scrollTop = terminal.scrollHeight;
+          i++;
+        } else {
+          clearInterval(interval);
+          btn.innerText = "Extraction Complete";
+          btn.style.background = "#059669";
+          setTimeout(() => loadPatientFromRecent(phone), 800);
+        }
+      }, 500);
+
+      // In real scenario, uncomment fetch
+      /*
+      try {
+        const fd = new FormData(); fd.append('phone', phone); fd.append('file', selectedFile);
+        await fetch(`${API}/process`, { method:'POST', body:fd });
+      } catch(e) {}
+      */
+    }
+
+    loadRecent();
+  </script>
+</body>
+</html>

@@ -28,7 +28,7 @@ That last one is the jaw-dropper in the demo. That is what wins.
 
 | Tool | What It Is | Why We Use It | Cost |
 |---|---|---|---|
-| **Gemini 2.5 Flash on Vertex AI** | Google's multimodal model via Vertex AI | Multilingual handwriting extraction + structured medical parsing | Free tier / GCP credits |
+| **Gemini 3.5 Flash on Vertex AI** | Google's multimodal model via Vertex AI | Multilingual handwriting extraction + structured medical parsing | Free tier / GCP credits |
 | **Agent Development Kit (ADK)** | Google Cloud agent framework | Agentic reasoning + tool orchestration across vision, alerts, and DB tools | Free with GCP account |
 | **Vertex AI** | Google Cloud AI platform | Managed Gemini runtime, model governance, production-ready inference path | Included in GCP usage |
 | **Cloud Storage** | Google Cloud object storage | Stores uploaded source documents and gives traceable artifact links for demo/audit | Free tier |
@@ -217,7 +217,7 @@ def extract_from_prescription(image_bytes: bytes) -> dict:
     Return ONLY the JSON, no explanation text.
     """
     
-    response = client.models.generate_content(model='gemini-2.5-flash', contents=[prompt, image])
+    response = client.models.generate_content(model='gemini-3.5-flash', contents=[prompt, image])
     
     # Parse the JSON response
     try:
@@ -271,7 +271,7 @@ alert_tool = Tool(
 # BUILD THE MAIN AGENT
 cliniqai_agent = Agent(
     name="CliniqAI",
-    model="gemini-2.5-flash",
+    model="gemini-3.5-flash",
     
     instruction="""
     You are CliniqAI, a medical records assistant for small clinics.
@@ -1242,7 +1242,7 @@ This is the most important thing you will do. Judges spend 3 minutes on your pro
 | 1:10–1:40 | Upload a second prescription for same patient — show it adds to history | "The agent recognizes returning patients and builds their complete medical timeline." |
 | 1:40–2:10 | Upload a prescription with amoxicillin for a patient with penicillin allergy | Show the RED alert appear. Say: "The agent caught a dangerous allergy conflict — a penicillin-allergic patient being prescribed amoxicillin. This could have killed someone." |
 | 2:10–2:35 | Type a query in the search box | "Doctors can ask anything in plain English — the agent queries MongoDB and answers instantly." |
-| 2:35–3:00 | Show the architecture diagram briefly | "Built on Google Cloud Agent Builder, Gemini 3, and MongoDB Atlas with MCP for real-time database operations." |
+| 2:35–3:00 | Show the architecture diagram briefly | "Built on Google Cloud Agent Builder, Gemini 3.5, and MongoDB Atlas with MCP for real-time database operations." |
 
 **The allergy demo moment is your winning moment. Plan it, rehearse it, make the red alert visible and shocking.**
 

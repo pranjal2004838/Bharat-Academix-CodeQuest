@@ -91,7 +91,7 @@ def extract_from_prescription(image_bytes: bytes) -> dict:
     # Generate the response
     try:
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.5-flash",
             contents=[prompt, types.Part.from_bytes(data=image_bytes, mime_type="image/jpeg")],
         )
     except Exception as e:

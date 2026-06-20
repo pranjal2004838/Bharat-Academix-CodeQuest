@@ -10,7 +10,7 @@ Architecture mapping:
     ADK Agent        →  Supervisor (orchestrator)
     ADK Tool         →  Each specialized agent (extraction, context, safety, record)
     ADK MCPTool      →  MongoDB MCP Server connection
-    ADK model        →  Gemini 2.5 Flash on Vertex AI
+    ADK model        →  Gemini 3.5 Flash on Vertex AI
 
 This file is NOT required for the system to work.
 It exists to show judges the Google-native agent story.
@@ -69,7 +69,7 @@ def get_adk_agent():
 
     cliniqai_agent = Agent(
         name="CliniqAI",
-        model="gemini-2.5-flash",
+        model="gemini-3.5-flash",
         instruction="""
         You are CliniqAI, a multi-agent clinical workflow orchestrator.
 

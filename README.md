@@ -5,7 +5,7 @@
 
 [![Live Demo](https://img.shields.io/badge/🚀_Live_Demo-Cloud_Run-4285F4?style=for-the-badge)](https://cliniqai-1072937704425.asia-south1.run.app)
 [![Google ADK](https://img.shields.io/badge/Google_ADK-Multi--Agent_Orchestration-34A853?style=for-the-badge&logo=google)](https://google.github.io/adk-docs/)
-[![Gemini 2.0 Flash](https://img.shields.io/badge/Gemini_2.0_Flash-Vertex_AI-FF6D00?style=for-the-badge&logo=google-cloud)](https://cloud.google.com/vertex-ai)
+[![Gemini 3.5 Flash](https://img.shields.io/badge/Gemini_3.5_Flash-Vertex_AI-FF6D00?style=for-the-badge&logo=google-cloud)](https://cloud.google.com/vertex-ai)
 [![MongoDB Atlas MCP](https://img.shields.io/badge/MongoDB_Atlas-MCP_Server-00ED64?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/atlas)
 [![Cloud Run](https://img.shields.io/badge/Deployed-Cloud_Run-4285F4?style=for-the-badge&logo=google-cloud)](https://cloud.run)
 
@@ -67,7 +67,7 @@ This is not a single LLM call wrapped in an API. CliniqAI implements a **true mu
 │  ┌─────────────────────┐  ┌──────────────────────────┐  │
 │  │   ExtractionAgent   │  │  PatientContextAgent     │  │
 │  │                     │  │                          │  │
-│  │  Gemini 2.0 Flash   │  │  MongoDB Atlas via MCP   │  │
+│  │  Gemini 3.5 Flash   │  │  MongoDB Atlas via MCP   │  │
 │  │  reads prescription │  │  fetches patient history │  │
 │  │  → structured JSON  │  │  → allergies, active Rx  │  │
 │  └─────────┬───────────┘  └──────────┬───────────────┘  │
@@ -125,7 +125,7 @@ This is not a single LLM call wrapped in an API. CliniqAI implements a **true mu
 │       ├──► 🤖 ADK Supervisor (Orchestrator)                 │
 │       │         │                                           │
 │       │         ├──► 🧠 ExtractionAgent                    │
-│       │         │    └─ Gemini 2.0 Flash on Vertex AI      │
+│       │         │    └─ Gemini 3.5 Flash on Vertex AI      │
 │       │         │       (Handwriting OCR, Hindi/English)   │
 │       │         │                                           │
 │       │         ├──► 🔍 PatientContextAgent                │
@@ -147,7 +147,7 @@ This is not a single LLM call wrapped in an API. CliniqAI implements a **true mu
 |:------|:-----------|
 | **Agent Orchestration** | **Google Agent Development Kit (ADK)** — `Supervisor` + 4 specialized agents |
 | **Parallel Execution** | `asyncio.gather` — ExtractionAgent ∥ PatientContextAgent |
-| **AI / Multilingual OCR** | **Gemini 2.0 Flash on Vertex AI** |
+| **AI / Multilingual OCR** | **Gemini 3.5 Flash on Vertex AI** |
 | **Patient Memory** | **MongoDB Atlas** connected via **MCP Server** (`McpToolset`) |
 | **Document Storage** | **Google Cloud Storage** |
 | **Deployment** | **Google Cloud Run** |
@@ -157,7 +157,7 @@ This is not a single LLM call wrapped in an API. CliniqAI implements a **true mu
 
 ## ✨ Key Capabilities
 
-### 1. 🖊️ Multilingual Handwriting Extraction *(ExtractionAgent → Gemini 2.0 Flash on Vertex AI)*
+### 1. 🖊️ Multilingual Handwriting Extraction *(ExtractionAgent → Gemini 3.5 Flash on Vertex AI)*
 Upload a photo of a handwritten prescription in **English, Hindi, Bengali, Telugu, Marathi, or Tamil**. The ExtractionAgent calls Gemini with structured output schema to return diagnosis, medications, dosages, and doctor notes as validated JSON — no manual typing, no regex parsing.
 
 ### 2. 🤖 Supervised Multi-Agent Orchestration *(Google ADK Supervisor)*
@@ -274,7 +274,7 @@ The orchestration code is in [`cliniqai/agent/orchestration/`](cliniqai/agent/or
 | File | Role |
 |:-----|:-----|
 | [`supervisor.py`](cliniqai/agent/orchestration/supervisor.py) | Orchestrator — parallel gather, validation gates, trace log |
-| [`agents/extraction_agent.py`](cliniqai/agent/orchestration/agents/extraction_agent.py) | Calls Gemini 2.0 Flash for OCR, returns `ExtractedData` |
+| [`agents/extraction_agent.py`](cliniqai/agent/orchestration/agents/extraction_agent.py) | Calls Gemini 3.5 Flash for OCR, returns `ExtractedData` |
 | [`agents/patient_context_agent.py`](cliniqai/agent/orchestration/agents/patient_context_agent.py) | Fetches & merges patient history via MongoDB MCP |
 | [`agents/safety_agent.py`](cliniqai/agent/orchestration/agents/safety_agent.py) | Evaluates drug conflicts, sets `requires_override` flag |
 | [`agents/record_update_agent.py`](cliniqai/agent/orchestration/agents/record_update_agent.py) | Persists visit record with full audit trail |
@@ -328,7 +328,7 @@ Built with ❤️ for the **Bharat Academix Codequest**
 **Built on Google Cloud · Orchestrated with Google ADK · Deployed on Cloud Run**
 
 [![Google ADK](https://img.shields.io/badge/Google-ADK_Multi--Agent-34A853?style=flat-square)](https://google.github.io/adk-docs/)
-[![Gemini 2.0 Flash](https://img.shields.io/badge/Gemini_2.0_Flash-Vertex_AI-FF6D00?style=flat-square&logo=google-cloud)](https://cloud.google.com/vertex-ai)
+[![Gemini 3.5 Flash](https://img.shields.io/badge/Gemini_3.5_Flash-Vertex_AI-FF6D00?style=flat-square&logo=google-cloud)](https://cloud.google.com/vertex-ai)
 [![MongoDB MCP](https://img.shields.io/badge/MongoDB-Atlas_MCP-00ED64?style=flat-square&logo=mongodb)](https://mongodb.com)
 
 *For 800 million patients who deserve better healthcare.*

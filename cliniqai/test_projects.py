@@ -7,7 +7,7 @@ for proj in projects:
     try:
         client = genai.Client(vertexai=True, project=proj, location='us-central1')
         r = client.models.generate_content(
-            model='gemini-2.5-flash',
+            model='gemini-3.5-flash',
             contents='Respond with EXACTLY the word SUCCESS'
         )
         print(f"-> SUCCESS for {proj}! Response: {r.text.strip()}")

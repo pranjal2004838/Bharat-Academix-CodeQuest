@@ -22,6 +22,7 @@
 > **The entire multi-agent pipeline, in a single glance.** From a handwritten Hindi prescription to a blocking drug-allergy alert — all automated, all traceable.
 
 ![CliniqAI Multi-Agent Flow — Prescription → AI Extraction → Patient History → ⚠️ Penicillin Allergy Detected → Doctor Alerted](docs/screenshots/agent_flow_diagram.png)
+*Figure 1: CliniqAI's end-to-end multi-agent clinical workflow, illustrating the orchestration from the raw medical document upload, through extraction via Gemini, DB patient history consolidation, safety verification, and physician alert trigger.*
 
 ---
 
@@ -198,6 +199,7 @@ Patients grant and revoke clinic access in real time. Complete data sovereignty 
 Real statistics, a timeline of a composite patient case (Priya), and a clear "How It Works" — judges understand the why in 30 seconds.
 
 ![Landing Page](docs/screenshots/landing.png)
+*Figure 2: The CliniqAI Landing Page, detailing rural healthcare metrics, the system architecture, and direct entry points to the secure portal.*
 
 ---
 
@@ -207,6 +209,8 @@ Pre-filled demo credentials for instant testing. No setup friction.
 | Clinic Login | Patient Login |
 |:---:|:---:|
 | ![Clinic Login](docs/screenshots/login_clinic.png) | ![Patient Login](docs/screenshots/login_patient.png) |
+
+*Figure 3: Dual authentication modes. Clinic Mode (left) allows provider authentication using Doctor/Hospital IDs. Patient Mode (right) allows secure patient access via mobile OTP.*
 
 > **Demo Credentials:**
 > - **Clinic:** `DR_DEMO_001` / `HSP_MUMBAI_001` / `demo123`  
@@ -218,6 +222,7 @@ Pre-filled demo credentials for instant testing. No setup friction.
 Search patients by phone number, view the active queue, and open any patient file instantly.
 
 ![Clinic Dashboard](docs/screenshots/hospital_dashboard.png)
+*Figure 4: Clinic Dashboard (Command Center) showing live unified registry activity, registry metrics, and patient directory search.*
 
 ---
 
@@ -225,6 +230,7 @@ Search patients by phone number, view the active queue, and open any patient fil
 Every visit, every prescription, every test, every allergy — in one screen. With the **AI Clinical Assistant** chat backed by the ADK agent's MongoDB MCP tool.
 
 ![Patient Detail View](docs/screenshots/patient_detail.png)
+*Figure 5: Patient Clinical File details view, displaying the active drug-drug interaction warning flagged by the SafetyAgent (e.g., Aspirin and Ibuprofen conflict) alongside the AI Clinical Assistant.*
 
 ---
 
@@ -232,6 +238,7 @@ Every visit, every prescription, every test, every allergy — in one screen. Wi
 Patients view all records from all clinics, manage access permissions, and query the AI health assistant about their own medications.
 
 ![Patient Portal](docs/screenshots/patient_portal.png)
+*Figure 6: Patient Portal view where patient Priya Sharma can inspect unified records, manage clinic permissions, and ask the chatbot questions.*
 
 ---
 

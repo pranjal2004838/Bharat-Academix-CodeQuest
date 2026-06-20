@@ -36,32 +36,10 @@
       background-color: var(--bg-dark);
       color: #fff;
       overflow-x: hidden;
-      cursor: none; /* Custom cursor */
     }
 
     h1, h2, h3, .heading-font {
       font-family: 'Space Grotesk', sans-serif;
-    }
-
-    /* Custom Magnetic Cursor */
-    #cursor {
-      position: fixed;
-      top: 0; left: 0;
-      width: 20px; height: 20px;
-      border-radius: 50%;
-      background: white;
-      mix-blend-mode: difference;
-      pointer-events: none;
-      z-index: 9999;
-      transform: translate(-50%, -50%);
-      transition: width 0.2s, height 0.2s, background 0.2s;
-    }
-    #cursor.active {
-      width: 60px; height: 60px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid white;
-      mix-blend-mode: normal;
-      backdrop-filter: blur(4px);
     }
 
     /* WebGL / Canvas Background */
@@ -104,11 +82,11 @@
 
     /* Act II: Tragedy (Horizontal Scroll) */
     .tragedy-container {
-      width: 300vw;
+      width: 400vw;
       height: 100vh;
       display: flex;
       flex-wrap: nowrap;
-      background: linear-gradient(to right, var(--bg-dark), #1a0b12, #2d0a14);
+      background: linear-gradient(to right, var(--bg-dark), #1a0b12, #2d0a14, #0f0509);
       position: relative;
     }
     .tragedy-panel {
@@ -183,22 +161,27 @@
     }
 
     .deck-container {
-      position: relative;
-      height: 400px;
-      display: flex;
-      justify-content: center;
+      display: grid;
+      grid-template-columns: repeat(1, 1fr);
+      gap: 2rem;
       margin-top: 4rem;
+    }
+    @media (min-width: 768px) {
+      .deck-container {
+        grid-template-columns: repeat(3, 1fr);
+      }
     }
 
     .deck-card {
-      position: absolute;
-      width: 300px;
       background: white;
       border-radius: 20px;
       padding: 2rem;
       box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
       border: 1px solid #e2e8f0;
-      transform-origin: bottom center;
+      transition: transform 0.3s;
+    }
+    .deck-card:hover {
+      transform: translateY(-5px);
     }
 
     .impact-number {
@@ -246,7 +229,6 @@
 </head>
 <body>
 
-  <div id="cursor"></div>
   <canvas id="particle-canvas"></canvas>
   <div class="crisis-vignette" id="vignette"></div>
 
@@ -277,8 +259,8 @@
       <div class="tragedy-panel">
         <div class="clinical-card" id="card-1">
           <div class="text-emerald-500 text-xs font-bold tracking-widest uppercase mb-4">March 5 · Rural Clinic</div>
-          <h3 class="text-2xl font-bold mb-2">Severe Cough</h3>
-          <p class="text-gray-400 mb-4">Doctor writes a quick note in a register. Patient takes the paper slip home.</p>
+          <h3 class="text-2xl font-bold mb-2">Treating a Cold</h3>
+          <p class="text-gray-400 mb-4">Priya, 42, is diabetic with a known Penicillin allergy. Her village clinic treats her cold and prescribes Amoxicillin — a Penicillin-class antibiotic.</p>
           <div class="border-t border-gray-700 pt-4 mt-4">
             <span class="text-xs text-gray-500">PRESCRIBED</span>
             <div class="font-mono text-lg text-emerald-400 mt-1">Amoxicillin 500mg</div>
@@ -289,27 +271,38 @@
       <!-- Panel 2: Visit 2 -->
       <div class="tragedy-panel">
         <div class="clinical-card" id="card-2" style="background: rgba(30,20,10, 0.6); border-color: rgba(245, 158, 11, 0.2);">
-          <div class="text-amber-500 text-xs font-bold tracking-widest uppercase mb-4">March 10 · City Hospital</div>
-          <h3 class="text-2xl font-bold mb-2">Blood Pressure Spike</h3>
-          <p class="text-gray-400 mb-4">Different city. Different doctor. The old paper slip was lost. No allergy questions asked.</p>
+          <div class="text-amber-500 text-xs font-bold tracking-widest uppercase mb-4">Meanwhile · 30 km Away</div>
+          <h3 class="text-2xl font-bold mb-2">The Missing Record</h3>
+          <p class="text-gray-400 mb-4">Her allergy is noted in a paper register at a different clinic. There is no way for the prescribing doctor to know.</p>
           <div class="border-t border-gray-700 pt-4 mt-4">
-            <span class="text-xs text-gray-500">PRESCRIBED</span>
-            <div class="font-mono text-lg text-amber-400 mt-1">Lisinopril 10mg + Aspirin 75mg</div>
+            <span class="text-xs text-gray-500">KNOWN ALLERGY</span>
+            <div class="font-mono text-lg text-amber-400 mt-1">Penicillin (Severe)</div>
           </div>
         </div>
       </div>
 
-      <!-- Panel 3: The Crisis -->
+      <!-- Panel 3: Complications & Hospitalization -->
       <div class="tragedy-panel">
         <svg class="heart-monitor" viewBox="0 0 1000 200" preserveAspectRatio="none">
           <path class="heart-path" d="M0,100 L200,100 L220,50 L250,150 L270,100 L800,100 L820,20 L850,180 L870,100 L1000,100" />
         </svg>
-        <div class="text-center" id="card-3">
-          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">March 15 · Emergency Room</div>
+        <div class="clinical-card" id="card-3" style="background: rgba(220,38,38, 0.1); border-color: rgba(220, 38, 38, 0.3);">
+          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">1 Week Later · ICU</div>
+          <h2 class="text-3xl font-black text-white heading-font mb-4">Severe Complications</h2>
+          <p class="text-lg text-red-200 opacity-90">
+            Priya takes the medicine. Within an hour, she is in anaphylactic shock. She is rushed to the emergency room and hospitalized for a week with life-threatening complications.
+          </p>
+        </div>
+      </div>
+
+      <!-- Panel 4: The Aftermath -->
+      <div class="tragedy-panel">
+        <div class="text-center" id="card-4">
+          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">The Aftermath</div>
           <h2 class="text-7xl font-black text-white heading-font mb-4 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">100% PREVENTABLE</h2>
           <p class="text-xl text-red-200 max-w-2xl mx-auto opacity-80">
-            A fatal drug interaction occurred. 4 days in ICU. ₹3,50,000 in debt. Permanent kidney damage.<br><br>
-            All because two doctors couldn't see the same record.
+            Priya survives, but suffers permanent kidney damage and is left with ₹3,50,000 in debt.<br><br>
+            This tragedy plays out thousands of times daily across India.
           </p>
         </div>
       </div>
@@ -345,7 +338,7 @@
         </div>
         <div class="deck-card z-10" id="deck-3">
           <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-2xl mb-6">⚡</div>
-          <h3 class="text-xl font-bold mb-3 heading-font">3. Protect</h3>
+          <h3 class="text-xl font-bold mb-3 heading-font text-gray-900">3. Protect</h3>
           <p class="text-gray-600">The AI cross-references the entire patient history to flag fatal drug conflicts.</p>
         </div>
       </div>
@@ -353,15 +346,221 @@
       <div class="mt-32 grid md:grid-cols-3 gap-8 text-center" id="metrics">
         <div>
           <div class="impact-number" id="num-1">0</div>
-          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Lives Saved / Year</div>
+          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Target Clinics</div>
         </div>
         <div>
-          <div class="impact-number">₹<span id="num-2">0</span>K Cr</div>
-          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Healthcare Savings</div>
+          <div class="impact-number"><span id="num-2">0</span>M+</div>
+          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Addressable Patients</div>
         </div>
         <div>
           <div class="impact-number" id="num-3">0</div>
           <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Minutes to Setup</div>
+        </div>
+      </div>
+
+      <!-- Beautiful Architecture Flow -->
+      <div class="mt-32 relative bg-gray-900 rounded-3xl p-10 md:p-16 shadow-2xl text-white overflow-hidden">
+        <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+        <div class="relative z-10">
+          <h3 class="text-3xl font-black heading-font mb-4 text-center">System Architecture & Workflow</h3>
+          <p class="text-lg text-gray-400 mb-16 text-center max-w-3xl mx-auto">From a simple photo to a life-saving alert. Here is how CliniqAI orchestrates multiple AI agents and Google Cloud services to protect patients in under 3 seconds.</p>
+          
+          <!-- Flow Diagram -->
+          <div class="flex flex-col items-center">
+            <!-- 1. Input -->
+            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
+               <div class="w-1/3 text-right pr-8 hidden md:block">
+                 <h4 class="font-bold text-emerald-400 text-xl">1. Clinical Input</h4>
+                 <p class="text-gray-400 text-sm mt-2">Doctor uploads a photo of a handwritten prescription via phone.</p>
+               </div>
+               <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#10B981] z-10 relative flex-shrink-0">
+                 <span class="text-2xl">📸</span>
+               </div>
+               <div class="w-2/3 md:w-1/3 pl-8">
+                 <div class="md:hidden mb-2">
+                   <h4 class="font-bold text-emerald-400 text-xl">1. Clinical Input</h4>
+                 </div>
+                 <div class="bg-gray-800 border border-emerald-500/30 p-4 rounded-xl text-sm text-gray-300">
+                   <span class="text-emerald-400 font-mono">POST /upload</span><br>FastAPI Backend
+                 </div>
+               </div>
+            </div>
+            
+            <!-- Arrow down -->
+            <div class="h-16 w-1 border-l-2 border-dashed border-emerald-500/50 my-2"></div>
+
+            <!-- 2. Extraction Agent -->
+            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
+               <div class="w-1/3 text-right pr-8 hidden md:block">
+                 <div class="bg-gray-800 border border-blue-500/30 p-4 rounded-xl text-sm text-gray-300">
+                   Powered by <span class="text-blue-400 font-bold">Google Gemini 3.5 Flash</span><br>Vision API
+                 </div>
+               </div>
+               <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#3B82F6] z-10 relative flex-shrink-0">
+                 <span class="text-2xl">🧠</span>
+               </div>
+               <div class="w-2/3 md:w-1/3 pl-8">
+                 <h4 class="font-bold text-blue-400 text-xl mb-1">2. Extraction Agent</h4>
+                 <p class="text-gray-400 text-sm">Analyzes handwriting in 6 languages. Extracts medicines, dosages, and patient phone number as structured JSON.</p>
+               </div>
+            </div>
+
+            <!-- Arrow down -->
+            <div class="h-16 w-1 border-l-2 border-dashed border-blue-500/50 my-2"></div>
+
+            <!-- 3. Context & Safety parallel -->
+            <div class="flex flex-col md:flex-row w-full max-w-5xl justify-center items-center md:space-x-12 space-y-8 md:space-y-0 relative">
+               <!-- Patient Context -->
+               <div class="w-full md:w-[300px] text-center border border-gray-700 bg-gray-800/50 rounded-2xl p-6">
+                  <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#A855F7] mx-auto mb-4 relative z-10">
+                    <span class="text-2xl">🔍</span>
+                  </div>
+                  <h4 class="font-bold text-purple-400 text-xl mb-2">3A. Patient Context Agent</h4>
+                  <p class="text-gray-400 text-sm mb-4">Fetches patient's longitudinal history across all clinics using MongoDB MCP.</p>
+                  <div class="bg-gray-800 border border-purple-500/30 p-3 rounded-xl text-xs text-gray-300 mx-auto w-48">
+                   <span class="text-purple-400 font-bold">MongoDB Atlas</span><br>Document Store
+                 </div>
+               </div>
+
+               <!-- Safety Agent -->
+               <div class="w-full md:w-[300px] text-center border border-gray-700 bg-gray-800/50 rounded-2xl p-6">
+                  <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#EF4444] mx-auto mb-4 relative z-10">
+                    <span class="text-2xl">🛡️</span>
+                  </div>
+                  <h4 class="font-bold text-red-400 text-xl mb-2">3B. Safety Agent</h4>
+                  <p class="text-gray-400 text-sm mb-4">Cross-references new drugs with patient history & WHO EML for fatal interactions.</p>
+                  <div class="bg-gray-800 border border-red-500/30 p-3 rounded-xl text-xs text-gray-300 mx-auto w-48">
+                   <span class="text-red-400 font-bold">Google ADK</span><br>Function Tools
+                 </div>
+               </div>
+            </div>
+
+            <!-- Arrow down -->
+            <div class="h-16 w-1 border-l-2 border-dashed border-red-500/50 my-4 mt-8"></div>
+
+            <!-- 4. Result -->
+            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
+               <div class="w-1/3 text-right pr-8 hidden md:block">
+                 <h4 class="font-bold text-amber-400 text-xl">4. Record Update & Alert</h4>
+                 <p class="text-gray-400 text-sm mt-2">If interaction found: Blocks prescription with visual alert. If safe: Updates MongoDB encrypted with KMS.</p>
+               </div>
+               <div class="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#F59E0B] z-10 relative flex-shrink-0">
+                 <span class="text-2xl">⚠️</span>
+               </div>
+               <div class="w-2/3 md:w-1/3 pl-8">
+                 <div class="md:hidden mb-2">
+                   <h4 class="font-bold text-amber-400 text-xl">4. Record Update & Alert</h4>
+                 </div>
+                 <div class="bg-gray-800 border border-amber-500/30 p-4 rounded-xl text-sm text-gray-300">
+                   <span class="text-amber-400 font-bold">Google Cloud KMS</span><br>Encryption & Hashing
+                 </div>
+               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Difference vs ABHA -->
+      <div class="mt-20">
+        <h3 class="text-3xl font-black heading-font text-gray-900 text-center mb-10">Why CliniqAI over ABHA?</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left bg-white text-gray-800 rounded-2xl overflow-hidden shadow-lg">
+            <thead class="bg-gray-100 border-b border-gray-200 text-gray-600">
+              <tr>
+                <th class="p-4 font-bold">Feature</th>
+                <th class="p-4 font-bold">Hospital EHR</th>
+                <th class="p-4 font-bold">ABHA / ABDM</th>
+                <th class="p-4 font-bold text-emerald-600">CliniqAI</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-gray-100">
+                <td class="p-4 font-medium">Cost per clinic</td>
+                <td class="p-4 text-gray-500">₹3.7L+ / year</td>
+                <td class="p-4 text-gray-500">Free</td>
+                <td class="p-4 text-emerald-600 font-bold">Free Tier</td>
+              </tr>
+              <tr class="border-b border-gray-100">
+                <td class="p-4 font-medium">Setup time</td>
+                <td class="p-4 text-gray-500">6–12 months</td>
+                <td class="p-4 text-gray-500">Weeks</td>
+                <td class="p-4 text-emerald-600 font-bold">5 minutes</td>
+              </tr>
+              <tr class="border-b border-gray-100">
+                <td class="p-4 font-medium">Handwritten Rx OCR</td>
+                <td class="p-4 text-gray-500">English typed only</td>
+                <td class="p-4 text-gray-500">None</td>
+                <td class="p-4 text-emerald-600 font-bold">6 Indian languages</td>
+              </tr>
+              <tr class="border-b border-gray-100">
+                <td class="p-4 font-medium">Active Safety Alerts</td>
+                <td class="p-4 text-gray-500">Within 1 hospital</td>
+                <td class="p-4 text-gray-500">None (Passive vault)</td>
+                <td class="p-4 text-emerald-600 font-bold">ALL clinics</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-center text-gray-500 mt-4 text-sm max-w-2xl mx-auto">ABHA stores health records. CliniqAI actively prevents harm before it happens. CliniqAI will sync with ABHA in Phase 3 — making it the AI safety bridge for clinics not yet on ABDM.</p>
+      </div>
+
+      <!-- Tech Stack Detailed -->
+      <div class="mt-32">
+        <h3 class="text-3xl font-black heading-font text-gray-900 text-center mb-16">Deep Dive: Technology Stack Justification</h3>
+        <div class="grid md:grid-cols-2 gap-8 text-left max-w-5xl mx-auto">
+          
+          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+            <div class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">Core AI Engine</div>
+            <div class="font-black heading-font text-2xl text-gray-900 mb-4">Google Gemini 3.5 Flash</div>
+            <p class="text-gray-600 mb-4"><strong>How it works:</strong> Gemini ingests the image of the prescription directly and uses its native multimodal capabilities to output a structured JSON of medicines, dosages, and patient details.</p>
+            <p class="text-gray-600"><strong>Why we chose this:</strong> Legacy OCR models (like Tesseract) fail completely on Indian doctor handwriting. Gemini 3.5 Flash not only reads the handwriting with near-perfect accuracy across 6 regional languages, but it understands the <em>context</em> of medical abbreviations (e.g., "BD" = Twice Daily). Its sub-second latency is crucial for our real-time 3-second SLA.</p>
+          </div>
+
+          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+            <div class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">Backend Architecture</div>
+            <div class="font-black heading-font text-2xl text-gray-900 mb-4">FastAPI & Python</div>
+            <p class="text-gray-600 mb-4"><strong>How it works:</strong> A high-performance asynchronous Python backend serves the API endpoints for the clinics and patient portals, managing the flow between the UI and the AI agents.</p>
+            <p class="text-gray-600"><strong>Why we chose this:</strong> We needed a lightweight, async framework that natively supports WebSockets (for future real-time alerts) and integrates perfectly with Google's Python SDKs. FastAPI's auto-generated Swagger documentation also makes future third-party integrations trivial.</p>
+          </div>
+
+          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+            <div class="text-xs font-bold text-purple-600 uppercase tracking-widest mb-2">Database & Context</div>
+            <div class="font-black heading-font text-2xl text-gray-900 mb-4">MongoDB Atlas & MCP</div>
+            <p class="text-gray-600 mb-4"><strong>How it works:</strong> All patient longitudinal records, including allergies and past prescriptions across different clinics, are stored as flexible JSON documents.</p>
+            <p class="text-gray-600"><strong>Why we chose this:</strong> Healthcare data is rarely uniform. Relational SQL databases break when dealing with varying lab report structures. MongoDB allows us to maintain a flexible schema. We use Model Context Protocol (MCP) to let our AI agents securely query the database in natural language.</p>
+          </div>
+
+          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
+            <div class="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Security & Orchestration</div>
+            <div class="font-black heading-font text-2xl text-gray-900 mb-4">Google Cloud ADK & KMS</div>
+            <p class="text-gray-600 mb-4"><strong>How it works:</strong> The Google Agent Development Kit orchestrates the 4-agent pipeline. Cloud KMS handles envelope encryption for all Personally Identifiable Information (PII).</p>
+            <p class="text-gray-600"><strong>Why we chose this:</strong> To deploy in Indian hospitals, we must comply with ABDM data privacy laws. KMS ensures data is encrypted at rest. The ADK allows us to strictly define boundaries for our Safety Agent, ensuring it relies on deterministic WHO EML data rather than hallucinating medical advice.</p>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Roadmap -->
+      <div class="mt-20 mb-10 bg-gray-900 text-white rounded-3xl p-10 md:p-16 shadow-2xl text-left">
+        <h3 class="text-3xl font-black heading-font mb-4">Future Upgradability: The Roadmap</h3>
+        <p class="text-gray-400 mb-8">From Idea to National Impact.</p>
+        <div class="space-y-6">
+          <div class="border-l-2 border-emerald-500 pl-6">
+            <div class="text-emerald-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 2: WhatsApp & Voice (Q3 2026)</div>
+            <p class="text-gray-300">WhatsApp bot for prescription uploads, Hindi voice-first interface, SMS patient alerts, and offline-capable mode.</p>
+          </div>
+          <div class="border-l-2 border-blue-500 pl-6">
+            <div class="text-blue-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 3: ABHA Integration (Q4 2026)</div>
+            <p class="text-gray-300">Migrate from mobile-number keys to Aadhaar-linked ABHA IDs. ABDM sync, Pharmacy Connect, and Multi-tenant deployments.</p>
+          </div>
+          <div class="border-l-2 border-purple-500 pl-6">
+            <div class="text-purple-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 4: Population Intelligence (2027)</div>
+            <p class="text-gray-300">Anonymized disease trend detection, predictive analytics for epidemic early warning, and public health research.</p>
+          </div>
         </div>
       </div>
 
@@ -403,43 +602,7 @@
     gsap.ticker.add((time) => { lenis.raf(time * 1000) });
     gsap.ticker.lagSmoothing(0);
 
-    // --- 2. Custom Magnetic Cursor ---
-    const cursor = document.getElementById('cursor');
-    const magneticTargets = document.querySelectorAll('.magnetic-target, .deck-card, .clinical-card, a');
-    
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-    let cursorX = mouseX;
-    let cursorY = mouseY;
-    
-    window.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-    });
-
-    // Cursor Follow Logic (Lerp)
-    gsap.ticker.add(() => {
-      const dt = 1.0 - Math.pow(1.0 - 0.2, gsap.ticker.deltaRatio());
-      cursorX += (mouseX - cursorX) * dt;
-      cursorY += (mouseY - cursorY) * dt;
-      cursor.style.transform = `translate(${cursorX}px, ${cursorY}px) translate(-50%, -50%)`;
-    });
-
-    magneticTargets.forEach(target => {
-      target.addEventListener('mouseenter', () => cursor.classList.add('active'));
-      target.addEventListener('mouseleave', () => {
-        cursor.classList.remove('active');
-        gsap.to(target, { x: 0, y: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)' });
-      });
-      target.addEventListener('mousemove', (e) => {
-        if(target.classList.contains('magnetic-target')) {
-          const rect = target.getBoundingClientRect();
-          const x = e.clientX - rect.left - rect.width / 2;
-          const y = e.clientY - rect.top - rect.height / 2;
-          gsap.to(target, { x: x * 0.3, y: y * 0.3, duration: 0.1 });
-        }
-      });
-    });
+    // --- 2. Animations ---
 
     // --- 3. WebGL Particle Canvas (Simplified 2D for Performance) ---
     const canvas = document.getElementById('particle-canvas');
@@ -511,7 +674,7 @@
       scrollTrigger: {
         trigger: "#tragedy-wrapper",
         start: "top top",
-        end: "+=3000",
+        end: "+=4000",
         scrub: 1,
         pin: true,
         onUpdate: self => {
@@ -546,6 +709,13 @@
         start: "left 70%", toggleActions: "play none none reverse"
       }
     });
+    gsap.to("#card-3", {
+      opacity: 1, y: 0, duration: 1,
+      scrollTrigger: {
+        trigger: "#card-3", containerAnimation: tlTragedy,
+        start: "left 70%", toggleActions: "play none none reverse"
+      }
+    });
     
     // Flatline animation
     gsap.to(".heart-path", {
@@ -563,31 +733,17 @@
       scrollTrigger: { trigger: "#salvation", start: "top 60%" }
     });
 
-    // Deck Fanning Math
-    const tlDeck = gsap.timeline({
-      scrollTrigger: {
-        trigger: "#deck",
-        start: "top 80%",
-        end: "bottom 40%",
-        scrub: 1
-      }
-    });
-    // Starting state: stacked
-    gsap.set(["#deck-1", "#deck-2", "#deck-3"], { y: 100, opacity: 0 });
-    
-    tlDeck.to("#deck-1", { y: 0, opacity: 1, rotation: -15, x: -200, duration: 1 }, 0)
-          .to("#deck-2", { y: -20, opacity: 1, duration: 1 }, 0)
-          .to("#deck-3", { y: 0, opacity: 1, rotation: 15, x: 200, duration: 1 }, 0);
+
 
     // Number counters
     ScrollTrigger.create({
       trigger: "#metrics",
       start: "top 80%",
       onEnter: () => {
-        gsap.to({val: 0}, {val: 100000, duration: 2, ease: "power3.out", onUpdate: function() {
-          document.getElementById('num-1').innerText = Math.floor(this.targets()[0].val).toLocaleString() + "+";
+        gsap.to({val: 0}, {val: 1.3, duration: 2, ease: "power3.out", onUpdate: function() {
+          document.getElementById('num-1').innerText = this.targets()[0].val.toFixed(1) + "M";
         }});
-        gsap.to({val: 0}, {val: 50, duration: 2.5, ease: "power3.out", onUpdate: function() {
+        gsap.to({val: 0}, {val: 800, duration: 2.5, ease: "power3.out", onUpdate: function() {
           document.getElementById('num-2').innerText = Math.floor(this.targets()[0].val);
         }});
         gsap.to({val: 0}, {val: 5, duration: 1.5, ease: "power3.out", onUpdate: function() {

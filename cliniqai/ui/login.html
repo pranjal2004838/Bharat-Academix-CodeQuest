@@ -1,373 +1,157 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CliniqAI — Portal Access</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CliniqAI — Login</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-
   <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      overflow: hidden;
-      background: #050505;
-      color: #fff;
-    }
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
 
-    /* Morphing Mesh Gradient Background */
-    .mesh-bg {
-      position: absolute;
-      top: -50%; left: -50%;
-      width: 200%; height: 200%;
-      background: 
-        radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.4) 0%, transparent 40%),
-        radial-gradient(circle at 80% 20%, rgba(14, 165, 233, 0.3) 0%, transparent 40%),
-        radial-gradient(circle at 20% 80%, rgba(4DD0E1, 0.2) 0%, transparent 40%);
-      filter: blur(80px);
-      animation: rotateMesh 20s infinite linear;
-      z-index: 1;
-    }
+    /* ── Background decoration ── */
+    .bg-deco { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
+    .bg-deco::before { content: ''; position: absolute; top: -10%; left: -10%; width: 50%; height: 50%; background: radial-gradient(circle, rgba(16,185,129,0.08) 0%, transparent 70%); }
+    .bg-deco::after { content: ''; position: absolute; bottom: -10%; right: -10%; width: 50%; height: 50%; background: radial-gradient(circle, rgba(37,99,235,0.05) 0%, transparent 70%); }
 
-    @keyframes rotateMesh {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
+    /* ── Card & Animation ── */
+    .login-card { background: white; border-radius: 20px; box-shadow: 0 20px 40px -10px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05); width: 100%; max-width: 440px; padding: 36px 40px; position: relative; z-index: 10; animation: fadeUp 0.6s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
 
-    /* Grid overlay for depth */
-    .grid-overlay {
-      position: absolute;
-      inset: 0;
-      background-image: 
-        linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-      z-index: 2;
-      opacity: 0.5;
-    }
+    /* ── Tabs ── */
+    .tab-container { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; margin-bottom: 28px; position: relative; }
+    .tab { flex: 1; text-align: center; padding: 10px 0; font-size: 0.85rem; font-weight: 600; color: #64748b; cursor: pointer; border-radius: 8px; transition: color 0.3s; z-index: 2; }
+    .tab.active { color: #0f172a; }
+    .tab-bg { position: absolute; top: 4px; bottom: 4px; width: calc(50% - 4px); background: white; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 1; }
 
-    /* Glass Card */
-    .portal-container {
-      position: relative;
-      z-index: 10;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
+    /* ── Form Inputs ── */
+    .form-group { margin-bottom: 20px; }
+    .form-label { display: block; font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .form-input { width: 100%; border: 1.5px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; font-size: 0.9rem; color: #0f172a; outline: none; transition: border-color 0.2s, box-shadow 0.2s; background: #fafafa; font-family: 'Inter', sans-serif; }
+    .form-input:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,0.12); background: white; }
 
-    .glass-card {
-      background: rgba(25, 25, 30, 0.4);
-      backdrop-filter: blur(40px);
-      -webkit-backdrop-filter: blur(40px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-top: 1px solid rgba(255, 255, 255, 0.3);
-      border-left: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 24px;
-      padding: 3.5rem 3rem;
-      width: 100%;
-      max-width: 440px;
-      box-shadow: 0 30px 60px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
-      transform: translateY(30px);
-      opacity: 0;
-    }
+    /* ── Button ── */
+    .btn-submit { width: 100%; background: #10b981; color: white; border: none; border-radius: 10px; padding: 14px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s, background 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 10px; }
+    .btn-submit:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 6px 16px rgba(16,185,129,0.25); }
+    .btn-submit:active { transform: translateY(0); }
 
-    .heading-font { font-family: 'Space Grotesk', sans-serif; }
-
-    /* Custom Input fields */
-    .input-group {
-      position: relative;
-      margin-bottom: 2rem;
-    }
-
-    .input-field {
-      width: 100%;
-      background: rgba(0, 0, 0, 0.2);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 12px;
-      padding: 1.2rem 1rem 0.6rem;
-      color: white;
-      font-size: 1rem;
-      outline: none;
-      transition: background 0.3s, border-color 0.3s;
-    }
-    
-    .input-field:focus {
-      background: rgba(0, 0, 0, 0.4);
-    }
-
-    .input-label {
-      position: absolute;
-      left: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: rgba(255,255,255,0.4);
-      pointer-events: none;
-      transition: 0.3s cubic-bezier(0.19, 1, 0.22, 1);
-      font-weight: 500;
-    }
-
-    /* Floating label mechanics */
-    .input-field:focus ~ .input-label,
-    .input-field:valid ~ .input-label {
-      top: 0.4rem;
-      transform: translateY(0) scale(0.75);
-      transform-origin: left top;
-      color: #10B981;
-      text-shadow: 0 0 8px rgba(16,185,129,0.5);
-    }
-
-    /* Laser line animation */
-    .laser-line {
-      position: absolute;
-      bottom: 0; left: 0;
-      height: 2px;
-      width: 0%;
-      background: #10B981;
-      box-shadow: 0 0 10px #10B981, 0 0 20px #10B981;
-      border-radius: 0 0 12px 12px;
-      transition: width 0.4s cubic-bezier(0.19, 1, 0.22, 1);
-    }
-    
-    .input-field:focus ~ .laser-line { width: 100%; }
-
-    /* Button Shimmer */
-    .auth-btn {
-      width: 100%;
-      padding: 1.2rem;
-      background: #10B981;
-      color: white;
-      border: none;
-      border-radius: 12px;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 1.1rem;
-      font-weight: 700;
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-      transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-      box-shadow: 0 10px 25px rgba(16,185,129,0.2);
-    }
-
-    .auth-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 15px 35px rgba(16,185,129,0.4);
-      background: #059669;
-    }
-
-    .shimmer {
-      position: absolute;
-      top: 0; left: -100%;
-      width: 50%; height: 100%;
-      background: linear-gradient(to right, transparent, rgba(255,255,255,0.4), transparent);
-      transform: skewX(-20deg);
-      animation: shimmer 3s infinite;
-    }
-
-    @keyframes shimmer {
-      0% { left: -100%; }
-      20% { left: 200%; }
-      100% { left: 200%; }
-    }
-
-    /* Loading state */
-    .auth-btn.loading {
-      color: transparent;
-      pointer-events: none;
-    }
-    .auth-btn.loading::after {
-      content: '';
-      position: absolute;
-      top: 50%; left: 50%;
-      width: 24px; height: 24px;
-      margin: -12px 0 0 -12px;
-      border: 3px solid rgba(255,255,255,0.3);
-      border-top-color: white;
-      border-radius: 50%;
-      animation: spin 0.8s infinite linear;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-
+    .demo-badge { position: absolute; top: -12px; right: -12px; background: #f59e0b; color: white; font-size: 0.65rem; font-weight: 800; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; letter-spacing: 0.05em; transform: rotate(12deg); box-shadow: 0 4px 10px rgba(245,158,11,0.3); }
   </style>
 </head>
 <body>
+  <div class="bg-deco"></div>
 
-  <div class="mesh-bg"></div>
-  <div class="grid-overlay"></div>
-
-  <div class="portal-container">
-    <div class="glass-card" id="login-card">
-      
-      <div class="text-center mb-8">
-        <div class="w-16 h-16 bg-emerald-500/20 rounded-full mx-auto mb-4 flex items-center justify-center border border-emerald-500/50" id="logo-icon">
-          <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
-            <path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="#10B981" stroke-width="1.5"/>
-            <path d="M8 12H16M12 8V16" stroke="#10B981" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <h1 class="text-3xl font-bold heading-font tracking-tight">Secure Portal</h1>
-        <p class="text-gray-400 text-sm mt-2">CliniqAI Unified Medical Records</p>
-      </div>
-
-      <!-- Login Tabs -->
-      <div class="flex mb-8 bg-gray-800/50 p-1 rounded-xl border border-gray-700">
-        <button id="tab-provider" class="flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all" onclick="switchTab('provider')">Provider</button>
-        <button id="tab-patient" class="flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all" onclick="switchTab('patient')">Patient</button>
-      </div>
-
-      <div id="login-error" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/50 text-red-400 text-sm rounded-lg text-center">
-        Invalid credentials. Please try again.
-      </div>
-
-      <!-- Provider Form -->
-      <form id="provider-form" class="auth-form">
-        <div class="input-group">
-          <input type="text" id="doctorId" class="input-field" required autocomplete="off">
-          <label for="doctorId" class="input-label">Doctor ID (e.g. DR_DEMO_001)</label>
-          <div class="laser-line"></div>
-        </div>
-
-        <div class="input-group">
-          <input type="password" id="password" class="input-field" required>
-          <label for="password" class="input-label">Password (e.g. demo123)</label>
-          <div class="laser-line"></div>
-        </div>
-
-        <button type="submit" class="auth-btn provider-btn">
-          Authenticate Provider
-          <div class="shimmer"></div>
-        </button>
-      </form>
-
-      <!-- Patient Form -->
-      <form id="patient-form" class="auth-form hidden">
-        <div class="input-group">
-          <input type="text" id="mobile" class="input-field" required autocomplete="off">
-          <label for="mobile" class="input-label">Mobile Number (e.g. 9876543210)</label>
-          <div class="laser-line"></div>
-        </div>
-
-        <div class="input-group">
-          <input type="password" id="otp" class="input-field" required>
-          <label for="otp" class="input-label">6-Digit OTP (e.g. 1234)</label>
-          <div class="laser-line"></div>
-        </div>
-
-        <button type="submit" class="auth-btn patient-btn">
-          Authenticate Patient
-          <div class="shimmer"></div>
-        </button>
-      </form>
-
-      <div class="mt-6 text-center text-xs text-gray-500">
-        Unauthorized access is strictly prohibited and logged.
-      </div>
-    </div>
+  <!-- Language Selector -->
+  <div class="absolute top-4 right-6 z-50">
+    <select id="languageSelect" onchange="changeLanguage(this.value)" class="bg-white border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 block p-2 shadow-sm font-medium">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी (Hindi)</option>
+      <option value="bn">বাংলা (Bengali)</option>
+      <option value="te">తెలుగు (Telugu)</option>
+      <option value="mr">मराठी (Marathi)</option>
+      <option value="ta">தமிழ் (Tamil)</option>
+      <!-- We can easily support all 29 regional languages here -->
+    </select>
   </div>
 
+  <div class="login-card">
+    <div class="demo-badge">Hackathon Demo</div>
+
+    <div class="text-center mb-8">
+      <div class="w-12 h-12 bg-emerald-600 rounded-xl flex items-center justify-center text-white text-xl font-bold shadow-md mx-auto mb-3">C</div>
+      <h1 class="text-2xl font-black text-slate-900" data-i18n="welcome">Welcome to CliniqAI</h1>
+      <p class="text-xs text-slate-500 mt-1" data-i18n="subtitle">Unified Health Records for India</p>
+    </div>
+
+    <!-- Toggle -->
+    <div class="tab-container">
+      <div id="tab-bg" class="tab-bg" style="transform: translateX(0%);"></div>
+      <div id="tab-clinic" class="tab active" onclick="setMode('clinic')" data-i18n="clinicMode">Clinic Mode</div>
+      <div id="tab-patient" class="tab" onclick="setMode('patient')" data-i18n="patientMode">Patient Mode</div>
+    </div>
+
+    <!-- Clinic Login -->
+    <form id="form-clinic" onsubmit="handleClinicLogin(event)">
+      <div class="form-group">
+        <label class="form-label" data-i18n="doctorID">Doctor ID</label>
+        <input type="text" id="clinic-doc-id" class="form-input" value="DR_DEMO_001" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label" data-i18n="hospitalID">Hospital ID</label>
+        <input type="text" id="clinic-hosp-id" class="form-input" value="HSP_MUMBAI_001" required />
+      </div>
+      <div class="form-group mb-6">
+        <label class="form-label" data-i18n="password">Password</label>
+        <input type="password" class="form-input" value="demo123" required />
+      </div>
+      <button type="submit" class="btn-submit" data-i18n="enterClinic">
+        Enter Clinic Dashboard →
+      </button>
+    </form>
+
+    <!-- Patient Login -->
+    <form id="form-patient" class="hidden" onsubmit="handlePatientLogin(event)">
+      <div class="form-group">
+        <label class="form-label" data-i18n="mobileNumber">Registered Mobile Number</label>
+        <input id="patient-phone" type="tel" class="form-input" value="9876543210" required />
+        <p class="text-[10px] text-slate-400 mt-1 pl-1" data-i18n="demoText">Use 9876543210 for the Priya Sharma demo</p>
+      </div>
+      <div class="form-group mb-6">
+        <label class="form-label" data-i18n="otp">OTP</label>
+        <input type="text" class="form-input" value="1234" required />
+      </div>
+      <button type="submit" class="btn-submit" style="background:#2563eb;" data-i18n="viewRecords">
+        View My Records →
+      </button>
+    </form>
+
+  </div>
+
+  <script src="/ui/i18n.js"></script>
   <script>
-    // Entrance animation
-    gsap.to("#login-card", {
-      opacity: 1,
-      y: 0,
-      duration: 1.2,
-      ease: "expo.out",
-      delay: 0.2
-    });
-
-    gsap.from("#logo-icon", {
-      scale: 0,
-      rotation: -180,
-      duration: 1.5,
-      ease: "elastic.out(1, 0.4)",
-      delay: 0.5
-    });
-
-    let currentTab = 'provider';
-    const errorBox = document.getElementById('login-error');
-
-    function switchTab(tab) {
-      currentTab = tab;
-      errorBox.classList.add('hidden');
-      
-      const tabProvider = document.getElementById('tab-provider');
+    function setMode(mode) {
+      const tabBg = document.getElementById('tab-bg');
+      const formClinic = document.getElementById('form-clinic');
+      const formPatient = document.getElementById('form-patient');
+      const tabClinic = document.getElementById('tab-clinic');
       const tabPatient = document.getElementById('tab-patient');
-      const formProvider = document.getElementById('provider-form');
-      const formPatient = document.getElementById('patient-form');
 
-      if (tab === 'provider') {
-        tabProvider.className = "flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all";
-        tabPatient.className = "flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all";
-        formProvider.classList.remove('hidden');
+      if (mode === 'clinic') {
+        tabBg.style.transform = 'translateX(0%)';
+        tabClinic.classList.add('active');
+        tabPatient.classList.remove('active');
+        formClinic.classList.remove('hidden');
         formPatient.classList.add('hidden');
       } else {
-        tabPatient.className = "flex-1 py-2 text-sm font-bold text-white bg-emerald-500/20 border border-emerald-500/50 rounded-lg transition-all";
-        tabProvider.className = "flex-1 py-2 text-sm font-medium text-gray-400 hover:text-white transition-all";
+        tabBg.style.transform = 'translateX(100%)';
+        tabPatient.classList.add('active');
+        tabClinic.classList.remove('active');
         formPatient.classList.remove('hidden');
-        formProvider.classList.add('hidden');
+        formClinic.classList.add('hidden');
       }
     }
 
-    // Add physical bump effect to inputs
-    document.querySelectorAll('.input-field').forEach(input => {
-      input.addEventListener('keydown', () => {
-        gsap.fromTo(input, { scale: 1.02 }, { scale: 1, duration: 0.1 });
-        errorBox.classList.add('hidden'); // clear error on typing
-      });
-    });
-
-    function handleLogin(e, type) {
+    function handleClinicLogin(e) {
       e.preventDefault();
-      
-      let isValid = false;
-      let targetUrl = '';
-
-      if (type === 'provider') {
-        const id = document.getElementById('doctorId').value;
-        const pass = document.getElementById('password').value;
-        if (id === 'DR_DEMO_001' && pass === 'demo123') {
-          isValid = true;
-          targetUrl = "/hospital";
-        }
-      } else {
-        const mobile = document.getElementById('mobile').value;
-        const otp = document.getElementById('otp').value;
-        if (mobile === '9876543210' && otp === '1234') {
-          isValid = true;
-          targetUrl = "/patient";
-        }
-      }
-
-      if (!isValid) {
-        errorBox.classList.remove('hidden');
-        // Shake animation
-        gsap.fromTo("#login-card", { x: -10 }, { x: 10, duration: 0.1, yoyo: true, repeat: 3, onComplete: () => gsap.set("#login-card", { x: 0 }) });
-        return;
-      }
-
-      const btn = e.target.querySelector('button[type="submit"]');
-      btn.classList.add('loading');
-      
+      const docId = document.getElementById('clinic-doc-id').value.trim();
+      const hospId = document.getElementById('clinic-hosp-id').value.trim();
+      localStorage.setItem('docId', docId);
+      localStorage.setItem('hospId', hospId);
+      localStorage.setItem('loginTs', new Date().toISOString());
+      // Add a tiny delay for button animation effect
       setTimeout(() => {
-        gsap.to("#login-card", {
-          scale: 1.5,
-          opacity: 0,
-          duration: 0.8,
-          ease: "power4.in",
-          onComplete: () => {
-            window.location.href = targetUrl;
-          }
-        });
-      }, 1000);
+        window.location.href = '/hospital';
+      }, 150);
     }
 
-    document.getElementById('provider-form').addEventListener('submit', (e) => handleLogin(e, 'provider'));
-    document.getElementById('patient-form').addEventListener('submit', (e) => handleLogin(e, 'patient'));
+    function handlePatientLogin(e) {
+      e.preventDefault();
+      const phone = document.getElementById('patient-phone').value.trim();
+      setTimeout(() => {
+        window.location.href = '/patient?phone=' + encodeURIComponent(phone);
+      }, 150);
+    }
   </script>
 </body>
 </html>

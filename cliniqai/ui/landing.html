@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CliniqAI — Unified Patient Records</title>
   
-  <!-- Fonts: Space Grotesk for dramatic headers, Inter for legible body -->
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@500;700;900&display=swap" rel="stylesheet">
@@ -18,6 +18,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/TextPlugin.min.js"></script>
   <script src="https://unpkg.com/@studio-freight/lenis@1.0.34/dist/lenis.min.js"></script>
+
+  <!-- Lottie Player -->
+  <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
   <style>
     :root {
@@ -38,7 +41,7 @@
       overflow-x: hidden;
     }
 
-    h1, h2, h3, .heading-font {
+    h1, h2, h3, h4, h5, .heading-font {
       font-family: 'Space Grotesk', sans-serif;
     }
 
@@ -82,11 +85,11 @@
 
     /* Act II: Tragedy (Horizontal Scroll) */
     .tragedy-container {
-      width: 400vw;
+      width: 600vw; /* 6 panels */
       height: 100vh;
       display: flex;
       flex-wrap: nowrap;
-      background: linear-gradient(to right, var(--bg-dark), #1a0b12, #2d0a14, #0f0509);
+      background: linear-gradient(to right, var(--bg-dark), #1a0b12, #2d0a14, #0f0509, #1c1917, #000);
       position: relative;
     }
     .tragedy-panel {
@@ -96,6 +99,7 @@
       align-items: center;
       justify-content: center;
       position: relative;
+      padding: 0 5vw;
     }
     
     .clinical-card {
@@ -104,7 +108,8 @@
       backdrop-filter: blur(16px);
       padding: 3rem;
       border-radius: 24px;
-      width: 500px;
+      width: 100%;
+      max-width: 800px;
       transform: translateY(50px);
       opacity: 0;
     }
@@ -135,9 +140,8 @@
       fill: none;
     }
 
-    /* Act III: Salvation */
-    .salvation-section {
-      min-height: 100vh;
+    /* Act III & onwards: Light Theme Sections */
+    .light-section {
       background: var(--bg-light);
       color: #0f172a;
       position: relative;
@@ -145,6 +149,14 @@
       z-index: 20;
     }
     
+    .dark-section {
+      background: var(--bg-dark);
+      color: #fff;
+      position: relative;
+      padding: 6rem 2rem;
+      z-index: 20;
+    }
+
     .glass-card {
       background: var(--glass-light);
       backdrop-filter: blur(20px);
@@ -158,30 +170,6 @@
     .glass-card:hover {
       transform: translateY(-10px) scale(1.02);
       box-shadow: 0 30px 60px -15px rgba(16,185,129,0.2);
-    }
-
-    .deck-container {
-      display: grid;
-      grid-template-columns: repeat(1, 1fr);
-      gap: 2rem;
-      margin-top: 4rem;
-    }
-    @media (min-width: 768px) {
-      .deck-container {
-        grid-template-columns: repeat(3, 1fr);
-      }
-    }
-
-    .deck-card {
-      background: white;
-      border-radius: 20px;
-      padding: 2rem;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1);
-      border: 1px solid #e2e8f0;
-      transition: transform 0.3s;
-    }
-    .deck-card:hover {
-      transform: translateY(-5px);
     }
 
     .impact-number {
@@ -219,6 +207,18 @@
     }
     .magnetic-btn:hover::before { left: 100%; }
 
+    /* Lottie Containers */
+    .lottie-hero {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 600px;
+      height: 600px;
+      opacity: 0.1;
+      z-index: -1;
+    }
+
     /* Hide scrollbar for Lenis */
     html.lenis { height: auto; }
     .lenis.lenis-smooth { scroll-behavior: auto; }
@@ -232,8 +232,11 @@
   <canvas id="particle-canvas"></canvas>
   <div class="crisis-vignette" id="vignette"></div>
 
-  <!-- ACT I: THE VOID -->
+  <!-- SECTION 1: HERO -->
   <section class="hero-section">
+    <!-- Heartbeat Lottie -->
+    <lottie-player src="https://lottie.host/5a0c102a-941d-40d3-a44b-91ccedfb641a/P1c7k5g3k8.json" background="transparent" speed="1" class="lottie-hero" loop autoplay></lottie-player>
+    
     <div class="text-emerald-500 font-semibold tracking-widest text-xs uppercase mb-8" style="opacity:0;" id="hackathon-tag">
       Bharat Academix Codequest 2026
     </div>
@@ -251,58 +254,109 @@
     </div>
   </section>
 
-  <!-- ACT II: THE TRAGEDY (Horizontal Scroll) -->
+  <!-- SECTION 2: PRIYA'S STORY (Horizontal Scroll - MASSIVELY EXPANDED) -->
   <section id="tragedy-wrapper" class="overflow-hidden">
     <div class="tragedy-container" id="tragedy-scroll">
       
-      <!-- Panel 1: Visit 1 -->
+      <!-- Panel 1: Meet Priya -->
       <div class="tragedy-panel">
-        <div class="clinical-card" id="card-1">
-          <div class="text-emerald-500 text-xs font-bold tracking-widest uppercase mb-4">March 5 · Rural Clinic</div>
-          <h3 class="text-2xl font-bold mb-2">Treating a Cold</h3>
-          <p class="text-gray-400 mb-4">Priya, 42, is diabetic with a known Penicillin allergy. Her village clinic treats her cold and prescribes Amoxicillin — a Penicillin-class antibiotic.</p>
-          <div class="border-t border-gray-700 pt-4 mt-4">
-            <span class="text-xs text-gray-500">PRESCRIBED</span>
-            <div class="font-mono text-lg text-emerald-400 mt-1">Amoxicillin 500mg</div>
+        <div class="clinical-card flex flex-col md:flex-row items-center gap-6" id="card-1">
+          <div class="flex-1">
+            <div class="text-blue-400 text-xs font-bold tracking-widest uppercase mb-4">Patient Profile</div>
+            <h3 class="text-2xl font-bold mb-2">Meet Priya</h3>
+            <p class="text-gray-400 mb-4">Priya, 42, is a mother of two and an Anganwadi worker in Wardha, Maharashtra. She manages diabetes. Three years ago, at a clinic 30km away in Nagpur, she was diagnosed with a severe Penicillin allergy.</p>
+            <p class="text-gray-400">That allergy was dutifully recorded... in a single paper register that never left that clinic.</p>
+          </div>
+          <div class="w-48 h-48 flex-shrink-0">
+             <!-- Woman Character Lottie -->
+             <lottie-player src="https://lottie.host/8cd7b204-7476-47b2-a4f6-06443c7b3b3a/yI7B7A4p8a.json" background="transparent" speed="1" loop autoplay></lottie-player>
           </div>
         </div>
       </div>
 
-      <!-- Panel 2: Visit 2 -->
+      <!-- Panel 2: The Common Cold -->
       <div class="tragedy-panel">
-        <div class="clinical-card" id="card-2" style="background: rgba(30,20,10, 0.6); border-color: rgba(245, 158, 11, 0.2);">
-          <div class="text-amber-500 text-xs font-bold tracking-widest uppercase mb-4">Meanwhile · 30 km Away</div>
-          <h3 class="text-2xl font-bold mb-2">The Missing Record</h3>
-          <p class="text-gray-400 mb-4">Her allergy is noted in a paper register at a different clinic. There is no way for the prescribing doctor to know.</p>
-          <div class="border-t border-gray-700 pt-4 mt-4">
-            <span class="text-xs text-gray-500">KNOWN ALLERGY</span>
-            <div class="font-mono text-lg text-amber-400 mt-1">Penicillin (Severe)</div>
+        <div class="clinical-card flex flex-col md:flex-row items-center gap-6" id="card-2" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
+          <div class="w-48 h-48 flex-shrink-0">
+             <!-- Doctor Writing Lottie -->
+             <lottie-player src="https://lottie.host/677f54c9-bc4c-47fc-b5dc-d6f7a6f23b7e/YfS3Wf4rZ3.json" background="transparent" speed="1" loop autoplay></lottie-player>
+          </div>
+          <div class="flex-1">
+            <div class="text-emerald-500 text-xs font-bold tracking-widest uppercase mb-4">March 5, 2026 · Village Clinic</div>
+            <h3 class="text-2xl font-bold mb-2">The Common Cold</h3>
+            <p class="text-gray-400 mb-4">Priya visits her local village clinic with a persistent cough. Dr. Patel is kind but overworked, seeing 80+ patients a day. He quickly writes a prescription on his pad to clear her chest.</p>
+            <div class="border-t border-gray-700 pt-4 mt-4">
+              <span class="text-xs text-gray-500">PRESCRIBED</span>
+              <div class="font-mono text-lg text-emerald-400 mt-1">Amoxicillin 500mg</div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- Panel 3: Complications & Hospitalization -->
+      <!-- Panel 3: The Missing Record -->
+      <div class="tragedy-panel">
+        <div class="clinical-card flex flex-col md:flex-row items-center gap-6" id="card-3" style="background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.2);">
+          <div class="flex-1">
+            <div class="text-amber-500 text-xs font-bold tracking-widest uppercase mb-4">Meanwhile · 30 km Away</div>
+            <h3 class="text-2xl font-bold mb-2">The Missing Record</h3>
+            <p class="text-gray-400 mb-4">Amoxicillin is a Penicillin-class antibiotic. Priya's allergy is known, but there is no digital trail. No cross-clinic memory. The prescribing doctor has absolutely no way to know he is handing her poison.</p>
+            <div class="border-t border-gray-700 pt-4 mt-4">
+              <span class="text-xs text-gray-500">FATAL KNOWLEDGE GAP</span>
+              <div class="font-mono text-lg text-amber-400 mt-1">Penicillin (Severe)</div>
+            </div>
+          </div>
+          <div class="w-48 h-48 flex-shrink-0 opacity-70">
+             <!-- Filing Cabinet / Files Lottie -->
+             <lottie-player src="https://lottie.host/9c336fa4-8fc5-48b8-b80c-7b0b69bc0032/K8yY5V0S4T.json" background="transparent" speed="1" loop autoplay></lottie-player>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 4: The Crisis -->
       <div class="tragedy-panel">
         <svg class="heart-monitor" viewBox="0 0 1000 200" preserveAspectRatio="none">
           <path class="heart-path" d="M0,100 L200,100 L220,50 L250,150 L270,100 L800,100 L820,20 L850,180 L870,100 L1000,100" />
         </svg>
-        <div class="clinical-card" id="card-3" style="background: rgba(220,38,38, 0.1); border-color: rgba(220, 38, 38, 0.3);">
-          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">1 Week Later · ICU</div>
-          <h2 class="text-3xl font-black text-white heading-font mb-4">Severe Complications</h2>
+        <div class="clinical-card flex flex-col items-center text-center" id="card-4" style="background: rgba(220,38,38, 0.1); border-color: rgba(220, 38, 38, 0.3); max-width: 800px;">
+          <div class="w-32 h-32 mb-6">
+             <!-- Ambulance / Emergency Lottie -->
+             <lottie-player src="https://lottie.host/9320e8b2-5f65-4d2a-a9e9-74f76269df70/l3K0t8bS9w.json" background="transparent" speed="1" loop autoplay></lottie-player>
+          </div>
+          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">1 Hour Later · Emergency</div>
+          <h2 class="text-3xl font-black text-white heading-font mb-4">Anaphylactic Shock</h2>
           <p class="text-lg text-red-200 opacity-90">
-            Priya takes the medicine. Within an hour, she is in anaphylactic shock. She is rushed to the emergency room and hospitalized for a week with life-threatening complications.
+            Priya takes the medicine. Within an hour, her throat closes. Her husband rushes her 45 minutes on a motorbike to the nearest hospital. She is intubated in the ICU fighting for her life.
           </p>
         </div>
       </div>
 
-      <!-- Panel 4: The Aftermath -->
+      <!-- Panel 5: The Aftermath -->
       <div class="tragedy-panel">
-        <div class="text-center" id="card-4">
-          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">The Aftermath</div>
-          <h2 class="text-7xl font-black text-white heading-font mb-4 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">100% PREVENTABLE</h2>
-          <p class="text-xl text-red-200 max-w-2xl mx-auto opacity-80">
-            Priya survives, but suffers permanent kidney damage and is left with ₹3,50,000 in debt.<br><br>
-            This tragedy plays out thousands of times daily across India.
+        <div class="clinical-card flex flex-col md:flex-row items-center gap-6" id="card-5" style="background: rgba(50,50,50, 0.4); border-color: rgba(100, 100, 100, 0.3);">
+          <div class="flex-1">
+            <div class="text-gray-400 text-xs font-bold tracking-widest uppercase mb-4">1 Month Later</div>
+            <h3 class="text-2xl font-bold mb-2 text-white">The Devastating Cost</h3>
+            <p class="text-gray-300 mb-4">Priya survives, but suffers permanent kidney damage from the shock. The family is left with ₹3,50,000 in medical debt—more than two years of her husband's income. Their eldest daughter drops out of school to help.</p>
+          </div>
+          <div class="w-48 h-48 flex-shrink-0 grayscale opacity-80">
+             <!-- Family / Heartbreak Lottie -->
+             <lottie-player src="https://lottie.host/3e8a4a35-24e5-4f4b-bd85-021966a33b93/r5q8N9C2W1.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel 6: 100% Preventable -->
+      <div class="tragedy-panel">
+        <div class="text-center w-full" id="card-6">
+          <div class="w-32 h-32 mx-auto mb-6">
+             <!-- Broken Heart Lottie -->
+             <lottie-player src="https://lottie.host/4611488c-1e24-4f0f-8c38-8c10e14edb87/vJv5HqIq48.json" background="transparent" speed="1" loop autoplay></lottie-player>
+          </div>
+          <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">The Hard Truth</div>
+          <h2 class="text-6xl md:text-8xl font-black text-white heading-font mb-4 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">100% PREVENTABLE</h2>
+          <p class="text-xl text-red-200 max-w-2xl mx-auto opacity-80 mt-8">
+            The data existed. It just wasn't accessible.<br><br>
+            This exact scenario plays out thousands of times daily across India, resulting in <strong>5.6 million hospitalizations per year.</strong>
           </p>
         </div>
       </div>
@@ -310,282 +364,603 @@
     </div>
   </section>
 
-  <!-- ACT III: THE SALVATION -->
-  <section class="salvation-section" id="salvation">
-    <div class="max-w-6xl mx-auto relative z-10">
-      
-      <div class="text-center mb-20" id="salvation-header">
-        <p class="text-emerald-600 font-bold tracking-widest text-sm uppercase mb-4">The Fix</p>
-        <h2 class="text-5xl md:text-7xl font-black heading-font text-gray-900 mb-6">
-          Enter <span class="text-emerald-500">CliniqAI.</span>
+  <!-- SECTION 3: PROBLEMS WITH PREVAILING SYSTEMS -->
+  <section class="light-section" id="problems">
+    <div class="max-w-7xl mx-auto relative z-10">
+      <div class="text-center mb-16">
+        <p class="text-red-600 font-bold tracking-widest text-sm uppercase mb-4">Why is this still happening?</p>
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-gray-900 mb-6">
+          The Failure of Current Systems
         </h2>
-        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
-          One Patient. One Mobile Number. Every record accessible instantly.<br>Powered by Google Gemini 3.5 Flash.
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Paper Registers -->
+        <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
+          <div class="h-32 mb-4 flex items-center justify-center bg-orange-50 rounded-xl relative overflow-hidden">
+             <!-- Burning paper / fire lottie -->
+             <lottie-player src="https://lottie.host/312a02b3-e5d4-473d-82d7-b8a964893796/z7m9K2wR0P.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">Paper Registers</h3>
+          <p class="text-gray-600 text-sm">Used by 95% of India's 1.3M clinics. Unsearchable, unsharable, prone to damage, and zero cross-clinic intelligence.</p>
+        </div>
+
+        <!-- Hospital EHRs -->
+        <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
+          <div class="h-32 mb-4 flex items-center justify-center bg-red-50 rounded-xl relative overflow-hidden">
+             <!-- Money flying lottie -->
+             <lottie-player src="https://lottie.host/80e720f4-5f4e-4f2f-b4de-1a8a3eb55a74/m8H5N2qQ8z.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">Enterprise EHRs</h3>
+          <p class="text-gray-600 text-sm">Cost ₹37 Lakh+/year. Take 6-12 months to deploy. English-typed only. Completely unaffordable for small rural clinics.</p>
+        </div>
+
+        <!-- WhatsApp -->
+        <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
+          <div class="h-32 mb-4 flex items-center justify-center bg-green-50 rounded-xl relative overflow-hidden">
+             <!-- Chat chaos lottie -->
+             <lottie-player src="https://lottie.host/62b665fa-948f-4952-b13d-d6a04870f2ab/v8G3H5mP1L.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">WhatsApp Chaos</h3>
+          <p class="text-gray-600 text-sm">Doctors send prescription photos to patients. No structured data, no active safety checks, massive privacy violations.</p>
+        </div>
+
+        <!-- ABHA (Passive) -->
+        <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
+          <div class="h-32 mb-4 flex items-center justify-center bg-blue-50 rounded-xl relative overflow-hidden">
+             <!-- ID card / vault lottie -->
+             <lottie-player src="https://lottie.host/d1d0c8b2-5a2a-4a2a-b2a2-5a2a4a2ab2a2/fakeABHA.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+          </div>
+          <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">ABHA (Currently)</h3>
+          <p class="text-gray-600 text-sm">A great record vault, but passive. No handwriting OCR, no active drug interaction alerts. It stores data, but doesn't actively prevent harm.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: ENTER CLINIQAI -->
+  <section class="dark-section relative overflow-hidden" id="solution">
+    <div class="absolute inset-0 z-0 flex justify-center opacity-30 pointer-events-none">
+      <!-- Confetti Lottie Background -->
+      <lottie-player src="https://lottie.host/9e49c12b-33ba-420a-8a58-5d46c820063f/vK0xS2zH5o.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+    </div>
+    
+    <div class="max-w-6xl mx-auto relative z-10">
+      <div class="text-center mb-16">
+        <p class="text-emerald-400 font-bold tracking-widest text-sm uppercase mb-4">The Fix</p>
+        <h2 class="text-5xl md:text-7xl font-black heading-font text-white mb-6 drop-shadow-lg">
+          Enter <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">CliniqAI.</span>
+        </h2>
+        <p class="text-2xl text-gray-300 font-light max-w-3xl mx-auto">
+          The AI Safety Bridge for India's 1.3 Million Clinics.
         </p>
       </div>
 
-      <!-- Deck Cards Animation -->
-      <div class="deck-container" id="deck">
-        <div class="deck-card z-30" id="deck-1">
-          <div class="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center text-2xl mb-6">📸</div>
-          <h3 class="text-xl font-bold mb-3 heading-font">1. Capture</h3>
-          <p class="text-gray-600">Snap a photo of any handwritten prescription or lab report in any language.</p>
+      <!-- Value Props -->
+      <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-16">
+        <div class="glass-card flex flex-col items-center text-center p-6">
+          <div class="w-16 h-16 bg-emerald-500/20 rounded-full flex items-center justify-center text-3xl mb-4">📸</div>
+          <h3 class="text-lg font-bold mb-2 text-emerald-300">Snap & Structure</h3>
+          <p class="text-gray-400 text-sm">Snap a photo of any handwritten prescription. Gemini AI turns it into structured data in seconds. 6 languages supported.</p>
         </div>
-        <div class="deck-card z-20" id="deck-2">
-          <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl mb-6">🤖</div>
-          <h3 class="text-xl font-bold mb-3 heading-font">2. Extract</h3>
-          <p class="text-gray-600">Gemini instantly extracts medicines, dosages, and diagnoses with clinical precision.</p>
+        
+        <div class="glass-card flex flex-col items-center text-center p-6">
+          <div class="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center text-3xl mb-4">🛡️</div>
+          <h3 class="text-lg font-bold mb-2 text-red-300">Active Safety Gates</h3>
+          <p class="text-gray-400 text-sm">AI cross-references the entire patient history to flag fatal drug conflicts before the patient leaves the clinic.</p>
         </div>
-        <div class="deck-card z-10" id="deck-3">
-          <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center text-2xl mb-6">⚡</div>
-          <h3 class="text-xl font-bold mb-3 heading-font text-gray-900">3. Protect</h3>
-          <p class="text-gray-600">The AI cross-references the entire patient history to flag fatal drug conflicts.</p>
+        
+        <div class="glass-card flex flex-col items-center text-center p-6">
+          <div class="w-16 h-16 bg-blue-500/20 rounded-full flex items-center justify-center text-3xl mb-4">🔐</div>
+          <h3 class="text-lg font-bold mb-2 text-blue-300">Data Sovereignty</h3>
+          <p class="text-gray-400 text-sm">Patients own their data. OTP-secured access means they grant and revoke clinic permissions instantly.</p>
         </div>
-      </div>
 
-      <div class="mt-32 grid md:grid-cols-3 gap-8 text-center" id="metrics">
-        <div>
-          <div class="impact-number" id="num-1">0</div>
-          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Target Clinics</div>
-        </div>
-        <div>
-          <div class="impact-number"><span id="num-2">0</span>M+</div>
-          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Addressable Patients</div>
-        </div>
-        <div>
-          <div class="impact-number" id="num-3">0</div>
-          <div class="font-bold text-gray-500 uppercase tracking-widest mt-2">Minutes to Setup</div>
+        <div class="glass-card flex flex-col items-center text-center p-6">
+          <div class="w-16 h-16 bg-purple-500/20 rounded-full flex items-center justify-center text-3xl mb-4">🤖</div>
+          <h3 class="text-lg font-bold mb-2 text-purple-300">AI Chatbot</h3>
+          <p class="text-gray-400 text-sm">A context-aware AI assistant that can answer natural language questions about a patient's full medical history.</p>
         </div>
       </div>
+    </div>
+  </section>
 
-      <!-- Beautiful Architecture Flow -->
-      <div class="mt-32 relative bg-gray-900 rounded-3xl p-10 md:p-16 shadow-2xl text-white overflow-hidden">
-        <div class="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
-        <div class="relative z-10">
-          <h3 class="text-3xl font-black heading-font mb-4 text-center">System Architecture & Workflow</h3>
-          <p class="text-lg text-gray-400 mb-16 text-center max-w-3xl mx-auto">From a simple photo to a life-saving alert. Here is how CliniqAI orchestrates multiple AI agents and Google Cloud services to protect patients in under 3 seconds.</p>
-          
-          <!-- Flow Diagram -->
-          <div class="flex flex-col items-center">
-            <!-- 1. Input -->
-            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
-               <div class="w-1/3 text-right pr-8 hidden md:block">
-                 <h4 class="font-bold text-emerald-400 text-xl">1. Clinical Input</h4>
-                 <p class="text-gray-400 text-sm mt-2">Doctor uploads a photo of a handwritten prescription via phone.</p>
-               </div>
-               <div class="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#10B981] z-10 relative flex-shrink-0">
-                 <span class="text-2xl">📸</span>
-               </div>
-               <div class="w-2/3 md:w-1/3 pl-8">
-                 <div class="md:hidden mb-2">
-                   <h4 class="font-bold text-emerald-400 text-xl">1. Clinical Input</h4>
-                 </div>
-                 <div class="bg-gray-800 border border-emerald-500/30 p-4 rounded-xl text-sm text-gray-300">
-                   <span class="text-emerald-400 font-mono">POST /upload</span><br>FastAPI Backend
-                 </div>
-               </div>
-            </div>
-            
-            <!-- Arrow down -->
-            <div class="h-16 w-1 border-l-2 border-dashed border-emerald-500/50 my-2"></div>
+  <!-- SECTION 5: HOW IT WORKS (Step-by-step Flow) -->
+  <section class="light-section" id="how-it-works">
+    <div class="max-w-6xl mx-auto relative z-10">
+      <div class="text-center mb-20">
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-gray-900 mb-6">How It Works</h2>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+          From a simple photo to a life-saving alert in under 3 seconds. Here is how our multi-agent Google ADK pipeline operates.
+        </p>
+      </div>
 
-            <!-- 2. Extraction Agent -->
-            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
-               <div class="w-1/3 text-right pr-8 hidden md:block">
-                 <div class="bg-gray-800 border border-blue-500/30 p-4 rounded-xl text-sm text-gray-300">
-                   Powered by <span class="text-blue-400 font-bold">Google Gemini 3.5 Flash</span><br>Vision API
-                 </div>
-               </div>
-               <div class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#3B82F6] z-10 relative flex-shrink-0">
-                 <span class="text-2xl">🧠</span>
-               </div>
-               <div class="w-2/3 md:w-1/3 pl-8">
-                 <h4 class="font-bold text-blue-400 text-xl mb-1">2. Extraction Agent</h4>
-                 <p class="text-gray-400 text-sm">Analyzes handwriting in 6 languages. Extracts medicines, dosages, and patient phone number as structured JSON.</p>
-               </div>
-            </div>
-
-            <!-- Arrow down -->
-            <div class="h-16 w-1 border-l-2 border-dashed border-blue-500/50 my-2"></div>
-
-            <!-- 3. Context & Safety parallel -->
-            <div class="flex flex-col md:flex-row w-full max-w-5xl justify-center items-center md:space-x-12 space-y-8 md:space-y-0 relative">
-               <!-- Patient Context -->
-               <div class="w-full md:w-[300px] text-center border border-gray-700 bg-gray-800/50 rounded-2xl p-6">
-                  <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#A855F7] mx-auto mb-4 relative z-10">
-                    <span class="text-2xl">🔍</span>
-                  </div>
-                  <h4 class="font-bold text-purple-400 text-xl mb-2">3A. Patient Context Agent</h4>
-                  <p class="text-gray-400 text-sm mb-4">Fetches patient's longitudinal history across all clinics using MongoDB MCP.</p>
-                  <div class="bg-gray-800 border border-purple-500/30 p-3 rounded-xl text-xs text-gray-300 mx-auto w-48">
-                   <span class="text-purple-400 font-bold">MongoDB Atlas</span><br>Document Store
-                 </div>
-               </div>
-
-               <!-- Safety Agent -->
-               <div class="w-full md:w-[300px] text-center border border-gray-700 bg-gray-800/50 rounded-2xl p-6">
-                  <div class="w-16 h-16 bg-red-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#EF4444] mx-auto mb-4 relative z-10">
-                    <span class="text-2xl">🛡️</span>
-                  </div>
-                  <h4 class="font-bold text-red-400 text-xl mb-2">3B. Safety Agent</h4>
-                  <p class="text-gray-400 text-sm mb-4">Cross-references new drugs with patient history & WHO EML for fatal interactions.</p>
-                  <div class="bg-gray-800 border border-red-500/30 p-3 rounded-xl text-xs text-gray-300 mx-auto w-48">
-                   <span class="text-red-400 font-bold">Google ADK</span><br>Function Tools
-                 </div>
-               </div>
-            </div>
-
-            <!-- Arrow down -->
-            <div class="h-16 w-1 border-l-2 border-dashed border-red-500/50 my-4 mt-8"></div>
-
-            <!-- 4. Result -->
-            <div class="flex items-center space-x-6 w-full max-w-4xl relative">
-               <div class="w-1/3 text-right pr-8 hidden md:block">
-                 <h4 class="font-bold text-amber-400 text-xl">4. Record Update & Alert</h4>
-                 <p class="text-gray-400 text-sm mt-2">If interaction found: Blocks prescription with visual alert. If safe: Updates MongoDB encrypted with KMS.</p>
-               </div>
-               <div class="w-16 h-16 bg-amber-500 rounded-full flex items-center justify-center shadow-[0_0_20px_#F59E0B] z-10 relative flex-shrink-0">
-                 <span class="text-2xl">⚠️</span>
-               </div>
-               <div class="w-2/3 md:w-1/3 pl-8">
-                 <div class="md:hidden mb-2">
-                   <h4 class="font-bold text-amber-400 text-xl">4. Record Update & Alert</h4>
-                 </div>
-                 <div class="bg-gray-800 border border-amber-500/30 p-4 rounded-xl text-sm text-gray-300">
-                   <span class="text-amber-400 font-bold">Google Cloud KMS</span><br>Encryption & Hashing
-                 </div>
-               </div>
+      <div class="relative border-l-4 border-emerald-100 ml-4 md:ml-1/2 md:translate-x-[-2px] space-y-24 pb-12">
+        
+        <!-- Step 1 -->
+        <div class="relative flex flex-col md:flex-row items-center w-full">
+          <div class="absolute left-[-22px] md:left-1/2 md:translate-x-[-50%] w-10 h-10 bg-emerald-500 rounded-full border-4 border-white flex items-center justify-center z-10 shadow-lg">
+            <span class="text-white font-bold">1</span>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-0 md:pr-16 text-left md:text-right">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2 heading-font">Doctor Uploads Photo 📸</h3>
+            <p class="text-gray-600">The doctor takes a picture of the handwritten prescription or lab report using any smartphone. No typing required. Works in English, Hindi, Bengali, Telugu, Marathi, or Tamil.</p>
+            <div class="mt-4 inline-block bg-gray-100 px-4 py-2 rounded-lg text-sm font-mono text-gray-600 border border-gray-200 shadow-sm">POST /process via FastAPI</div>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-start">
+            <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center border border-gray-100">
+              <!-- Phone/Camera Lottie -->
+              <lottie-player src="https://lottie.host/1b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/camera.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
             </div>
           </div>
         </div>
+
+        <!-- Step 2 -->
+        <div class="relative flex flex-col md:flex-row-reverse items-center w-full">
+          <div class="absolute left-[-22px] md:left-1/2 md:translate-x-[-50%] w-10 h-10 bg-blue-500 rounded-full border-4 border-white flex items-center justify-center z-10 shadow-lg">
+            <span class="text-white font-bold">2</span>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-0 md:pr-16 text-left">
+            <h3 class="text-2xl font-bold text-blue-600 mb-2 heading-font">Extraction Agent 🧠</h3>
+            <p class="text-gray-600">Google Gemini 3.5 Flash uses native multimodal vision to read the handwriting. It structures the data: Patient name, medicines, dosages, and notes. Every field gets a confidence score (0.0-1.0). Low confidence triggers a manual review.</p>
+            <div class="mt-4 inline-block bg-blue-50 px-4 py-2 rounded-lg text-sm font-mono text-blue-700 border border-blue-200 shadow-sm">ADK FunctionTool: vision_tool</div>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-end md:justify-start">
+            <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center mr-0 md:mr-16 border border-gray-100">
+              <!-- Brain Lottie -->
+              <lottie-player src="https://lottie.host/2b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/brain.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3A & 3B (Parallel) -->
+        <div class="relative flex flex-col w-full items-center">
+          <div class="absolute left-[-22px] md:left-1/2 md:translate-x-[-50%] w-10 h-10 bg-purple-500 rounded-full border-4 border-white flex items-center justify-center z-10 shadow-lg">
+            <span class="text-white font-bold text-xs">3A/B</span>
+          </div>
+          
+          <div class="w-full pl-8 md:pl-0 mt-8 md:mt-0">
+            <div class="text-center mb-10 hidden md:block">
+              <span class="bg-gray-800 text-emerald-400 px-6 py-2 rounded-full text-xs font-bold tracking-widest shadow-md border border-gray-700">EXECUTING IN PARALLEL (asyncio.gather)</span>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-8 w-full max-w-4xl mx-auto px-0 md:px-8">
+              <!-- 3A -->
+              <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-center hover:shadow-2xl transition-shadow">
+                <div class="h-24 mb-6 flex justify-center">
+                  <!-- Database Search Lottie -->
+                  <lottie-player src="https://lottie.host/3b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/database.json" background="transparent" speed="1" style="height: 100px" loop autoplay></lottie-player>
+                </div>
+                <h4 class="font-bold text-purple-600 text-xl mb-3 heading-font">3A. Patient Context Agent 🔍</h4>
+                <p class="text-gray-600 text-sm">Queries MongoDB Atlas via MCP using the patient's phone number. Fetches complete history, past diagnoses, and known allergies across all clinics.</p>
+                <div class="mt-4 inline-block bg-purple-50 px-3 py-1 rounded text-xs font-mono text-purple-700 border border-purple-200">McpToolset: mongodb</div>
+              </div>
+              
+              <!-- 3B -->
+              <div class="bg-white p-8 rounded-3xl shadow-xl border border-red-100 text-center hover:shadow-2xl transition-shadow relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-bl-full -z-10"></div>
+                <div class="h-24 mb-6 flex justify-center">
+                  <!-- Shield Lottie -->
+                  <lottie-player src="https://lottie.host/4b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/shield.json" background="transparent" speed="1" style="height: 100px" loop autoplay></lottie-player>
+                </div>
+                <h4 class="font-bold text-red-500 text-xl mb-3 heading-font">3B. Safety Agent 🛡️</h4>
+                <p class="text-gray-600 text-sm">Cross-references new drugs with patient history & WHO Essential Medicines List. If a severe conflict exists, it creates a <strong class="text-red-500">HARD BLOCKING GATE</strong>.</p>
+                <div class="mt-4 inline-block bg-red-50 px-3 py-1 rounded text-xs font-mono text-red-700 border border-red-200">FunctionTool: alert_tool</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="relative flex flex-col md:flex-row items-center w-full mt-24">
+          <div class="absolute left-[-22px] md:left-1/2 md:translate-x-[-50%] w-10 h-10 bg-amber-500 rounded-full border-4 border-white flex items-center justify-center z-10 shadow-lg">
+            <span class="text-white font-bold">4</span>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-0 md:pr-16 text-left md:text-right">
+            <h3 class="text-2xl font-bold text-amber-600 mb-2 heading-font">Record Update & Audit 💾</h3>
+            <p class="text-gray-600">If safe (or overridden by a doctor), the visit is saved to MongoDB. The system creates an immutable SHA-256 hash-chain audit log. All PII is encrypted with Google Cloud KMS.</p>
+            <div class="mt-4 inline-block bg-amber-50 px-4 py-2 rounded-lg text-sm font-mono text-amber-700 border border-amber-200 shadow-sm">RecordUpdateAgent</div>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-start">
+            <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center border border-gray-100">
+              <!-- Success / Checkmark Lottie -->
+              <lottie-player src="https://lottie.host/5b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/success.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 5 -->
+        <div class="relative flex flex-col md:flex-row-reverse items-center w-full mt-24 pb-12">
+          <div class="absolute left-[-22px] md:left-1/2 md:translate-x-[-50%] w-10 h-10 bg-gray-900 rounded-full border-4 border-white flex items-center justify-center z-10 shadow-lg">
+            <span class="text-white font-bold">5</span>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-0 md:pr-16 text-left">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2 heading-font">Doctor Gets Result ⚡</h3>
+            <p class="text-gray-600">If the AI flags a fatal interaction, a RED ALERT blocks the screen and the doctor MUST acknowledge before proceeding. Total time elapsed: <strong class="text-emerald-500">&lt; 3 seconds.</strong></p>
+          </div>
+          <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-end md:justify-start">
+            <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center mr-0 md:mr-16 border border-gray-100">
+               <!-- Doctor Celebration Lottie -->
+               <lottie-player src="https://lottie.host/e2b6e9a6-1076-47b2-a4f6-06443c7b3b3a/3FqQxY4B7v.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 6: TECH STACK DEEP DIVE -->
+  <section class="dark-section" id="tech-stack">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-white mb-6">Tech Stack Deep Dive</h2>
+        <p class="text-gray-400 max-w-3xl mx-auto text-lg">Every technology was chosen to solve specific clinical challenges in rural India. No hype, just impact.</p>
       </div>
 
-      <!-- Difference vs ABHA -->
-      <div class="mt-20">
-        <h3 class="text-3xl font-black heading-font text-gray-900 text-center mb-10">Why CliniqAI over ABHA?</h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left bg-white text-gray-800 rounded-2xl overflow-hidden shadow-lg">
-            <thead class="bg-gray-100 border-b border-gray-200 text-gray-600">
+      <div class="grid md:grid-cols-2 gap-8">
+        <!-- Gemini -->
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl hover:border-blue-500/50 transition-colors group">
+          <div class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">Core AI Engine</div>
+          <h3 class="text-2xl font-bold text-white mb-2 heading-font">Google Gemini 3.5 Flash <span class="text-sm font-normal text-gray-400 ml-2">via Vertex AI</span></h3>
+          <ul class="space-y-4 text-gray-400 mt-6 text-sm">
+            <li><strong class="text-gray-200">How it works:</strong> Gemini ingests the raw image and uses native multimodal capabilities to output a structured JSON schema.</li>
+            <li><strong class="text-blue-300">Why we chose it:</strong> Legacy OCR models (Tesseract) fail completely on Indian doctor handwriting. Gemini 3.5 Flash not only reads 6 regional languages but understands medical context ("BD" = Twice Daily). Sub-second latency is crucial for our 3-second SLA.</li>
+          </ul>
+        </div>
+
+        <!-- Google ADK -->
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl hover:border-emerald-500/50 transition-colors group">
+          <div class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">Orchestration</div>
+          <h3 class="text-2xl font-bold text-white mb-2 heading-font">Google Agent Dev Kit (ADK)</h3>
+          <ul class="space-y-4 text-gray-400 mt-6 text-sm">
+            <li><strong class="text-gray-200">How it works:</strong> Orchestrates the Supervisor and 4 specialized agents. Maps our Python functions as `FunctionTool` and connects to MongoDB via `McpToolset`.</li>
+            <li><strong class="text-emerald-300">Why we chose it:</strong> Single-LLM prompts are dangerous for healthcare. ADK allows us to build a deterministic system where agents run in parallel and the SafetyAgent provides a hard, algorithmic validation gate.</li>
+          </ul>
+        </div>
+
+        <!-- MongoDB -->
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl hover:border-green-500/50 transition-colors group">
+          <div class="text-xs font-bold text-green-500 uppercase tracking-widest mb-2">Database & Context</div>
+          <h3 class="text-2xl font-bold text-white mb-2 heading-font">MongoDB Atlas & MCP</h3>
+          <ul class="space-y-4 text-gray-400 mt-6 text-sm">
+            <li><strong class="text-gray-200">How it works:</strong> Patient histories are stored as JSON documents. The AI queries the DB in natural language using the Model Context Protocol (MCP).</li>
+            <li><strong class="text-green-300">Why we chose it:</strong> Medical data (lab reports, prescriptions) varies wildly in structure. Relational SQL breaks. MongoDB's flexible schema handles this gracefully, and MCP integrates flawlessly with ADK.</li>
+          </ul>
+        </div>
+
+        <!-- Security -->
+        <div class="bg-gray-900 border border-gray-800 p-8 rounded-3xl hover:border-amber-500/50 transition-colors group">
+          <div class="text-xs font-bold text-amber-500 uppercase tracking-widest mb-2">Security & Orchestration</div>
+          <h3 class="text-2xl font-bold text-white mb-2 heading-font">FastAPI, Cloud Run & KMS</h3>
+          <ul class="space-y-4 text-gray-400 mt-6 text-sm">
+            <li><strong class="text-gray-200">How it works:</strong> High-performance async Python backend deployed on serverless Cloud Run. Cloud KMS handles envelope encryption.</li>
+            <li><strong class="text-amber-300">Why we chose it:</strong> FastAPI's async nature perfectly supports `asyncio.gather` for parallel agent execution. Cloud KMS ensures ABDM-compliant encryption for patient PII, meaning data is safe at rest.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 7: USE CASE SCENARIOS -->
+  <section class="light-section bg-gradient-to-b from-white to-gray-50" id="use-cases">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center mb-16">
+        <p class="text-emerald-500 font-bold tracking-widest text-sm uppercase mb-4">Real World Impact</p>
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-gray-900 mb-6">When CliniqAI Saves the Day</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        
+        <!-- Scenario 1 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- Rural Clinic Lottie -->
+             <lottie-player src="https://lottie.host/76b8a2e1-4c6e-4f7f-87a3-55a297e68df4/E5K2v3P9zR.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Rural Clinic Visit</h4>
+          <p class="text-gray-600 text-sm">A doctor in a small village clinic seeing 80+ patients a day. He has one smartphone. He snaps a photo. One tap. CliniqAI instantly reads the prescription and updates the global record.</p>
+        </div>
+
+        <!-- Scenario 2 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- ER Lottie -->
+             <lottie-player src="https://lottie.host/d2a3f11e-7b44-46c5-8e6c-7f51bbda8a21/M4wQ5T7H1b.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Emergency Room</h4>
+          <p class="text-gray-600 text-sm">A patient arrives unconscious. The ER doctor searches their phone number. The entire medical history, blood type, and life-threatening allergies appear on screen in seconds.</p>
+        </div>
+
+        <!-- Scenario 3 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- Pills/Medicine Lottie -->
+             <lottie-player src="https://lottie.host/a8b9e6f2-1c34-45d6-b8e7-3f9c2a8b5e41/X1V5K2M9L4.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Cross-Clinic Conflict</h4>
+          <p class="text-gray-600 text-sm">A patient visits three different specialists. Doctor C prescribes Aspirin, unaware Doctor A prescribed Ibuprofen yesterday. CliniqAI catches the severe GI bleeding risk.</p>
+        </div>
+
+        <!-- Scenario 4 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- Family Lottie -->
+             <lottie-player src="https://lottie.host/b9c8d7e6-f5a4-4b3c-9d8e-7f6a5b4c3d2e/Q8J3H4P1S6.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Family Management</h4>
+          <p class="text-gray-600 text-sm">A mother managing medications for elderly parents across multiple specialists can view all prescriptions, dosages, and reports in one unified, simple portal.</p>
+        </div>
+
+        <!-- Scenario 5 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- Pregnancy Lottie -->
+             <lottie-player src="https://lottie.host/c1d2e3f4-a5b6-4c7d-8e9f-0a1b2c3d4e5f/Z7N2M5R8T1.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Pregnancy Care</h4>
+          <p class="text-gray-600 text-sm">An OB-GYN instantly sees all medications an expectant mother is taking and the system automatically flags any Category X (teratogenic) drugs.</p>
+        </div>
+
+        <!-- Scenario 6 -->
+        <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
+          <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
+             <!-- Health Camp Lottie -->
+             <lottie-player src="https://lottie.host/e5f6a7b8-c9d0-4e1f-2a3b-4c5d6e7f8a9b/W3P8K5V2M1.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+          </div>
+          <h4 class="font-bold text-xl mb-3 heading-font">Remote Health Camps</h4>
+          <p class="text-gray-600 text-sm">An NGO running a health camp in a remote village uses CliniqAI to create instant, permanent digital records for patients who have never had one.</p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 8, 9, 10, 11: FEATURES DEEP DIVE -->
+  <section class="light-section" id="features">
+    <div class="max-w-6xl mx-auto space-y-32">
+      
+      <!-- AI Chatbot -->
+      <div class="flex flex-col md:flex-row items-center gap-12">
+        <div class="w-full md:w-1/2">
+          <h3 class="text-3xl font-black heading-font text-gray-900 mb-4">Context-Aware AI Clinical Assistant</h3>
+          <p class="text-gray-600 mb-4 text-lg">Doctors don't have time to scroll through 10 years of PDF reports. They need answers.</p>
+          <p class="text-gray-600 mb-6">Our Gemini-powered chatbot has FULL context of the patient's cross-clinic history via MongoDB MCP. It understands complex medical queries.</p>
+          <div class="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
+            <p class="italic text-gray-700 mb-2">"What BP meds is Priya currently on?"</p>
+            <p class="italic text-gray-700 mb-2">"When was her last HbA1c test?"</p>
+            <p class="italic text-gray-700 font-semibold text-emerald-600 mt-4">→ Saves 5-10 minutes per consultation.</p>
+          </div>
+        </div>
+        <div class="w-full md:w-1/2 bg-blue-50/50 rounded-[3rem] p-8 flex justify-center border border-blue-100">
+           <!-- Chatbot Lottie -->
+           <lottie-player src="https://lottie.host/6b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/chatbot.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+        </div>
+      </div>
+
+      <!-- Prescriptions Intact -->
+      <div class="flex flex-col md:flex-row-reverse items-center gap-12">
+        <div class="w-full md:w-1/2">
+          <h3 class="text-3xl font-black heading-font text-gray-900 mb-4">Original Documents, Intact & Secure</h3>
+          <p class="text-gray-600 mb-6 text-lg">We don't just extract text; we preserve the legal and historical record.</p>
+          <ul class="space-y-4 text-gray-700">
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">📎</span>
+              <span><strong>Original Image Storage:</strong> Every uploaded prescription is stored in Cloud Storage for audit purposes.</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">🔗</span>
+              <span><strong>Cryptographic Linking:</strong> Images are linked to the structured patient record with full provenance (which doctor, when, where).</span>
+            </li>
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">📁</span>
+              <span><strong>Patient Access:</strong> Patients can view ALL their original reports from ALL clinics in one place.</span>
+            </li>
+          </ul>
+        </div>
+        <div class="w-full md:w-1/2 bg-emerald-50/50 rounded-[3rem] p-8 flex justify-center border border-emerald-100">
+           <!-- Documents Lottie -->
+           <lottie-player src="https://lottie.host/7b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/documents.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+        </div>
+      </div>
+
+      <!-- Data Sovereignty & Security -->
+      <div class="flex flex-col md:flex-row items-center gap-12">
+        <div class="w-full md:w-1/2">
+          <h3 class="text-3xl font-black heading-font text-gray-900 mb-4">True Data Sovereignty & Security</h3>
+          <p class="text-gray-600 mb-6 text-lg">Patients OWN their data, not hospitals. Our architecture enforces strict sovereignty:</p>
+          <ul class="space-y-4 text-gray-700">
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">📱</span>
+              <div>
+                <strong>OTP-Based Access Control:</strong>
+                <p class="text-sm mt-1 text-gray-500">Mobile numbers act as the universal ID. A 5-minute OTP grants access. Patients can revoke clinic access instantly. No Aadhaar required for MVP.</p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">⛓️</span>
+              <div>
+                <strong>SHA-256 Hashing:</strong>
+                <p class="text-sm mt-1 text-gray-500">Every database write creates an immutable hash-chain audit log. Tampering is mathematically impossible without breaking the chain.</p>
+              </div>
+            </li>
+            <li class="flex items-start">
+              <span class="text-2xl mr-4">🔒</span>
+              <div>
+                <strong>Cloud KMS Encryption:</strong>
+                <p class="text-sm mt-1 text-gray-500">All PII is envelope-encrypted at rest. Even database administrators cannot read raw patient data.</p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="w-full md:w-1/2 bg-purple-50/50 rounded-[3rem] p-8 flex justify-center border border-purple-100">
+           <!-- Security Lottie -->
+           <lottie-player src="https://lottie.host/8b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/security.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- SECTION 12 & 13: IMPACT & ABHA -->
+  <section class="dark-section" id="abha">
+    <div class="max-w-6xl mx-auto">
+      
+      <!-- India Transformation -->
+      <div class="text-center mb-24 relative">
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-white mb-6">Transforming India's Healthcare</h2>
+        <p class="text-xl text-gray-300 max-w-3xl mx-auto relative z-10">
+          We are bringing enterprise-grade AI safety to the <strong>1.3 million small clinics</strong> that currently have nothing. For <strong>800 million rural patients</strong>, CliniqAI is the difference between a simple doctor visit and a fatal drug error.
+        </p>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-[400px] opacity-10 pointer-events-none">
+          <!-- India Map / Network Lottie -->
+          <lottie-player src="https://lottie.host/f1a2b3c4-d5e6-7f8a-9b0c-1d2e3f4a5b6c/M9P2R4T7V1.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+        </div>
+      </div>
+
+      <!-- ABHA Supplement -->
+      <div class="bg-gray-800 rounded-[3rem] p-8 md:p-16 border border-gray-700 relative overflow-hidden shadow-2xl">
+        <div class="absolute bottom-0 right-0 opacity-20 pointer-events-none">
+           <!-- Handshake / Bridge Lottie -->
+           <lottie-player src="https://lottie.host/9b5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/handshake.json" background="transparent" speed="1" style="height: 400px" loop autoplay></lottie-player>
+        </div>
+        
+        <h3 class="text-3xl md:text-4xl font-black heading-font text-white mb-4 relative z-10">How We Supplement ABHA</h3>
+        <p class="text-gray-300 mb-10 max-w-2xl relative z-10 text-lg">
+          CliniqAI does <strong>NOT</strong> compete with the Ayushman Bharat Digital Mission (ABDM). We are the active AI safety layer that ABHA doesn't currently have. We bridge the gap for clinics not yet on ABDM.
+        </p>
+
+        <div class="overflow-x-auto relative z-10">
+          <table class="w-full text-left bg-gray-900/80 backdrop-blur-md text-gray-200 rounded-2xl overflow-hidden shadow-xl">
+            <thead class="bg-gray-950 border-b border-gray-700">
               <tr>
-                <th class="p-4 font-bold">Feature</th>
-                <th class="p-4 font-bold">Hospital EHR</th>
-                <th class="p-4 font-bold">ABHA / ABDM</th>
-                <th class="p-4 font-bold text-emerald-600">CliniqAI</th>
+                <th class="p-5 font-bold text-gray-400">Feature Area</th>
+                <th class="p-5 font-bold text-blue-400">ABHA (Current Vault)</th>
+                <th class="p-5 font-bold text-emerald-400 text-lg">CliniqAI (Active Safety)</th>
               </tr>
             </thead>
             <tbody>
-              <tr class="border-b border-gray-100">
-                <td class="p-4 font-medium">Cost per clinic</td>
-                <td class="p-4 text-gray-500">₹3.7L+ / year</td>
-                <td class="p-4 text-gray-500">Free</td>
-                <td class="p-4 text-emerald-600 font-bold">Free Tier</td>
+              <tr class="border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                <td class="p-5 font-medium text-gray-300">Core Function</td>
+                <td class="p-5 text-gray-400">Stores records passively</td>
+                <td class="p-5 text-emerald-400 font-bold">Actively prevents medical errors</td>
               </tr>
-              <tr class="border-b border-gray-100">
-                <td class="p-4 font-medium">Setup time</td>
-                <td class="p-4 text-gray-500">6–12 months</td>
-                <td class="p-4 text-gray-500">Weeks</td>
-                <td class="p-4 text-emerald-600 font-bold">5 minutes</td>
+              <tr class="border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                <td class="p-5 font-medium text-gray-300">Input Method</td>
+                <td class="p-5 text-gray-400">Requires digital/typed input</td>
+                <td class="p-5 text-emerald-400 font-bold">OCR for 6 handwritten languages</td>
               </tr>
-              <tr class="border-b border-gray-100">
-                <td class="p-4 font-medium">Handwritten Rx OCR</td>
-                <td class="p-4 text-gray-500">English typed only</td>
-                <td class="p-4 text-gray-500">None</td>
-                <td class="p-4 text-emerald-600 font-bold">6 Indian languages</td>
+              <tr class="border-b border-gray-800/50 hover:bg-gray-800/50 transition-colors">
+                <td class="p-5 font-medium text-gray-300">Drug Interactions</td>
+                <td class="p-5 text-gray-400">None</td>
+                <td class="p-5 text-emerald-400 font-bold">WHO EML + OpenFDA alerts</td>
               </tr>
-              <tr class="border-b border-gray-100">
-                <td class="p-4 font-medium">Active Safety Alerts</td>
-                <td class="p-4 text-gray-500">Within 1 hospital</td>
-                <td class="p-4 text-gray-500">None (Passive vault)</td>
-                <td class="p-4 text-emerald-600 font-bold">ALL clinics</td>
+              <tr class="hover:bg-gray-800/50 transition-colors">
+                <td class="p-5 font-medium text-gray-300">Onboarding Friction</td>
+                <td class="p-5 text-gray-400">Requires ABHA ID creation</td>
+                <td class="p-5 text-emerald-400 font-bold">Instant via Mobile Number</td>
               </tr>
             </tbody>
           </table>
         </div>
-        <p class="text-center text-gray-500 mt-4 text-sm max-w-2xl mx-auto">ABHA stores health records. CliniqAI actively prevents harm before it happens. CliniqAI will sync with ABHA in Phase 3 — making it the AI safety bridge for clinics not yet on ABDM.</p>
-      </div>
-
-      <!-- Tech Stack Detailed -->
-      <div class="mt-32">
-        <h3 class="text-3xl font-black heading-font text-gray-900 text-center mb-16">Deep Dive: Technology Stack Justification</h3>
-        <div class="grid md:grid-cols-2 gap-8 text-left max-w-5xl mx-auto">
-          
-          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-            <div class="text-xs font-bold text-blue-500 uppercase tracking-widest mb-2">Core AI Engine</div>
-            <div class="font-black heading-font text-2xl text-gray-900 mb-4">Google Gemini 3.5 Flash</div>
-            <p class="text-gray-600 mb-4"><strong>How it works:</strong> Gemini ingests the image of the prescription directly and uses its native multimodal capabilities to output a structured JSON of medicines, dosages, and patient details.</p>
-            <p class="text-gray-600"><strong>Why we chose this:</strong> Legacy OCR models (like Tesseract) fail completely on Indian doctor handwriting. Gemini 3.5 Flash not only reads the handwriting with near-perfect accuracy across 6 regional languages, but it understands the <em>context</em> of medical abbreviations (e.g., "BD" = Twice Daily). Its sub-second latency is crucial for our real-time 3-second SLA.</p>
-          </div>
-
-          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-            <div class="text-xs font-bold text-emerald-500 uppercase tracking-widest mb-2">Backend Architecture</div>
-            <div class="font-black heading-font text-2xl text-gray-900 mb-4">FastAPI & Python</div>
-            <p class="text-gray-600 mb-4"><strong>How it works:</strong> A high-performance asynchronous Python backend serves the API endpoints for the clinics and patient portals, managing the flow between the UI and the AI agents.</p>
-            <p class="text-gray-600"><strong>Why we chose this:</strong> We needed a lightweight, async framework that natively supports WebSockets (for future real-time alerts) and integrates perfectly with Google's Python SDKs. FastAPI's auto-generated Swagger documentation also makes future third-party integrations trivial.</p>
-          </div>
-
-          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-            <div class="text-xs font-bold text-purple-600 uppercase tracking-widest mb-2">Database & Context</div>
-            <div class="font-black heading-font text-2xl text-gray-900 mb-4">MongoDB Atlas & MCP</div>
-            <p class="text-gray-600 mb-4"><strong>How it works:</strong> All patient longitudinal records, including allergies and past prescriptions across different clinics, are stored as flexible JSON documents.</p>
-            <p class="text-gray-600"><strong>Why we chose this:</strong> Healthcare data is rarely uniform. Relational SQL databases break when dealing with varying lab report structures. MongoDB allows us to maintain a flexible schema. We use Model Context Protocol (MCP) to let our AI agents securely query the database in natural language.</p>
-          </div>
-
-          <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 relative overflow-hidden group">
-            <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 rounded-bl-full -z-10 transition-transform group-hover:scale-110"></div>
-            <div class="text-xs font-bold text-red-500 uppercase tracking-widest mb-2">Security & Orchestration</div>
-            <div class="font-black heading-font text-2xl text-gray-900 mb-4">Google Cloud ADK & KMS</div>
-            <p class="text-gray-600 mb-4"><strong>How it works:</strong> The Google Agent Development Kit orchestrates the 4-agent pipeline. Cloud KMS handles envelope encryption for all Personally Identifiable Information (PII).</p>
-            <p class="text-gray-600"><strong>Why we chose this:</strong> To deploy in Indian hospitals, we must comply with ABDM data privacy laws. KMS ensures data is encrypted at rest. The ADK allows us to strictly define boundaries for our Safety Agent, ensuring it relies on deterministic WHO EML data rather than hallucinating medical advice.</p>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- Roadmap -->
-      <div class="mt-20 mb-10 bg-gray-900 text-white rounded-3xl p-10 md:p-16 shadow-2xl text-left">
-        <h3 class="text-3xl font-black heading-font mb-4">Future Upgradability: The Roadmap</h3>
-        <p class="text-gray-400 mb-8">From Idea to National Impact.</p>
-        <div class="space-y-6">
-          <div class="border-l-2 border-emerald-500 pl-6">
-            <div class="text-emerald-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 2: WhatsApp & Voice (Q3 2026)</div>
-            <p class="text-gray-300">WhatsApp bot for prescription uploads, Hindi voice-first interface, SMS patient alerts, and offline-capable mode.</p>
-          </div>
-          <div class="border-l-2 border-blue-500 pl-6">
-            <div class="text-blue-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 3: ABHA Integration (Q4 2026)</div>
-            <p class="text-gray-300">Migrate from mobile-number keys to Aadhaar-linked ABHA IDs. ABDM sync, Pharmacy Connect, and Multi-tenant deployments.</p>
-          </div>
-          <div class="border-l-2 border-purple-500 pl-6">
-            <div class="text-purple-400 text-sm font-bold tracking-widest uppercase mb-1">Phase 4: Population Intelligence (2027)</div>
-            <p class="text-gray-300">Anonymized disease trend detection, predictive analytics for epidemic early warning, and public health research.</p>
+        
+        <div class="mt-8 bg-emerald-500/10 border border-emerald-500/30 p-6 rounded-2xl relative z-10 flex items-start gap-4">
+          <span class="text-3xl">🚀</span>
+          <div>
+            <h4 class="font-bold text-emerald-400 mb-1">Phase 3 Migration Path</h4>
+            <p class="text-gray-300 text-sm">CliniqAI will integrate with ABHA—migrating from mobile number keys to Aadhaar-linked ABHA IDs. This makes CliniqAI the AI frontend for the national registry, accelerating ABDM adoption.</p>
           </div>
         </div>
-      </div>
-
-      <div class="mt-32 text-center pb-20">
-        <a href="/login" class="magnetic-btn magnetic-target" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; padding: 1.5rem 4rem; box-shadow: 0 20px 40px rgba(16,185,129,0.3);">
-          Experience the Portal
-        </a>
-        <p class="mt-6 text-gray-400 text-sm">Interactive Live Demo • No real patient data used</p>
       </div>
 
     </div>
   </section>
 
+  <!-- SECTION 14: ROADMAP -->
+  <section class="light-section" id="roadmap">
+    <div class="max-w-4xl mx-auto">
+      <div class="text-center mb-20">
+        <h2 class="text-4xl md:text-5xl font-black heading-font text-gray-900 mb-6">The Road Ahead</h2>
+        <p class="text-gray-600">From a hackathon prototype to national impact.</p>
+      </div>
+
+      <div class="space-y-12 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-emerald-300 before:to-transparent">
+        
+        <!-- Phase 1 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+          <div class="flex items-center justify-center w-12 h-12 rounded-full border-4 border-white bg-emerald-500 shadow-xl shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-xl">
+            🎯
+          </div>
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform transition-transform hover:-translate-y-2">
+            <div class="text-emerald-500 font-bold text-sm tracking-widest uppercase mb-2">Phase 1 (Now)</div>
+            <h4 class="font-bold text-gray-900 text-2xl mb-3 heading-font">MVP Launch</h4>
+            <p class="text-gray-600">4-agent ADK pipeline, Gemini OCR for 6 languages, MongoDB context memory, and strict algorithmic safety gates.</p>
+          </div>
+        </div>
+
+        <!-- Phase 2 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-12 h-12 rounded-full border-4 border-white bg-blue-500 shadow-xl shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-xl">
+            📱
+          </div>
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform transition-transform hover:-translate-y-2">
+            <div class="text-blue-500 font-bold text-sm tracking-widest uppercase mb-2">Phase 2 (Q3 2026)</div>
+            <h4 class="font-bold text-gray-900 text-2xl mb-3 heading-font">Accessibility Layer</h4>
+            <p class="text-gray-600">WhatsApp bot for frictionless prescription uploads, Hindi voice-first interface for rural doctors, SMS alerts, and offline caching.</p>
+          </div>
+        </div>
+
+        <!-- Phase 3 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-12 h-12 rounded-full border-4 border-white bg-purple-500 shadow-xl shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-xl">
+            🏛️
+          </div>
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform transition-transform hover:-translate-y-2">
+            <div class="text-purple-500 font-bold text-sm tracking-widest uppercase mb-2">Phase 3 (Q4 2026)</div>
+            <h4 class="font-bold text-gray-900 text-2xl mb-3 heading-font">ABHA Sync</h4>
+            <p class="text-gray-600">Migrate to Aadhaar-linked ABHA IDs. Two-way ABDM health record synchronization and automated Pharmacy Connect.</p>
+          </div>
+        </div>
+
+        <!-- Phase 4 -->
+        <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group">
+          <div class="flex items-center justify-center w-12 h-12 rounded-full border-4 border-white bg-amber-500 shadow-xl shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 z-10 text-xl">
+            🌍
+          </div>
+          <div class="w-[calc(100%-4rem)] md:w-[calc(50%-3rem)] bg-white p-8 rounded-3xl shadow-xl border border-gray-100 transform transition-transform hover:-translate-y-2">
+            <div class="text-amber-500 font-bold text-sm tracking-widest uppercase mb-2">Phase 4 (2027)</div>
+            <h4 class="font-bold text-gray-900 text-2xl mb-3 heading-font">Population Intelligence</h4>
+            <p class="text-gray-600">Anonymized disease trend detection across regions, predictive analytics for epidemic early warnings, and public health research API.</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 15: CTA -->
+  <section class="dark-section text-center py-32 relative overflow-hidden">
+    <div class="absolute inset-0 z-0 flex justify-center opacity-20 pointer-events-none">
+       <!-- Rocket Lottie -->
+       <lottie-player src="https://lottie.host/ab5df21a-5b1a-4b1a-9b1a-5b1a4b1ab1a2/rocket.json" background="transparent" speed="0.5" style="height: 100%" loop autoplay></lottie-player>
+    </div>
+    <div class="relative z-10">
+      <h2 class="text-5xl font-black heading-font text-white mb-8">Experience the Difference</h2>
+      <a href="/login" class="magnetic-btn" style="font-family: 'Space Grotesk', sans-serif; font-size: 1.5rem; padding: 1.5rem 4rem; box-shadow: 0 20px 40px rgba(16,185,129,0.3);">
+        Enter the Portal
+      </a>
+      <p class="mt-6 text-gray-400 text-sm">Interactive Live Demo • Pre-filled Credentials • No real patient data used</p>
+    </div>
+  </section>
+
   <script>
-    // --- 1. Init Lenis (Smooth Scroll) ---
+    // 1. Init Lenis (Smooth Scroll)
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
       direction: 'vertical',
       gestureDirection: 'vertical',
       smooth: true,
-      mouseMultiplier: 1,
-      smoothTouch: false,
-      touchMultiplier: 2,
-      infinite: false,
     });
 
     function raf(time) {
@@ -594,7 +969,7 @@
     }
     requestAnimationFrame(raf);
 
-    // --- GSAP ScrollTrigger Integration ---
+    // 2. GSAP ScrollTrigger Integration
     gsap.registerPlugin(ScrollTrigger, TextPlugin);
     ScrollTrigger.defaults({ scroller: window });
 
@@ -602,9 +977,7 @@
     gsap.ticker.add((time) => { lenis.raf(time * 1000) });
     gsap.ticker.lagSmoothing(0);
 
-    // --- 2. Animations ---
-
-    // --- 3. WebGL Particle Canvas (Simplified 2D for Performance) ---
+    // 3. WebGL Particle Canvas (Simplified 2D for Performance)
     const canvas = document.getElementById('particle-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -632,6 +1005,7 @@
       }
     }
     function initParticles() {
+      particlesArray = [];
       for (let i = 0; i < 150; i++) particlesArray.push(new Particle());
     }
     function animateParticles() {
@@ -650,7 +1024,13 @@
     initParticles();
     animateParticles();
 
-    // --- 4. GSAP Timelines ---
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      initParticles();
+    });
+
+    // 4. GSAP Timelines
     
     // Act I: Intro
     const tlIntro = gsap.timeline();
@@ -674,7 +1054,7 @@
       scrollTrigger: {
         trigger: "#tragedy-wrapper",
         start: "top top",
-        end: "+=4000",
+        end: "+=6000",
         scrub: 1,
         pin: true,
         onUpdate: self => {
@@ -695,26 +1075,14 @@
     });
 
     // Reveal cards during horizontal scroll
-    gsap.to("#card-1", {
-      opacity: 1, y: 0, duration: 1,
-      scrollTrigger: {
-        trigger: "#card-1", containerAnimation: tlTragedy,
-        start: "left center", toggleActions: "play none none reverse"
-      }
-    });
-    gsap.to("#card-2", {
-      opacity: 1, y: 0, duration: 1,
-      scrollTrigger: {
-        trigger: "#card-2", containerAnimation: tlTragedy,
-        start: "left 70%", toggleActions: "play none none reverse"
-      }
-    });
-    gsap.to("#card-3", {
-      opacity: 1, y: 0, duration: 1,
-      scrollTrigger: {
-        trigger: "#card-3", containerAnimation: tlTragedy,
-        start: "left 70%", toggleActions: "play none none reverse"
-      }
+    [1, 2, 3, 4, 5, 6].forEach(i => {
+      gsap.to(`#card-${i}`, {
+        opacity: 1, y: 0, duration: 1,
+        scrollTrigger: {
+          trigger: `#card-${i}`, containerAnimation: tlTragedy,
+          start: "left 80%", toggleActions: "play none none reverse"
+        }
+      });
     });
     
     // Flatline animation
@@ -722,33 +1090,8 @@
       strokeDashoffset: 0,
       duration: 2,
       scrollTrigger: {
-        trigger: "#card-3", containerAnimation: tlTragedy,
+        trigger: "#card-4", containerAnimation: tlTragedy,
         start: "left 60%"
-      }
-    });
-
-    // Act III: Salvation Reveal
-    gsap.from("#salvation-header", {
-      opacity: 0, y: 50, duration: 1,
-      scrollTrigger: { trigger: "#salvation", start: "top 60%" }
-    });
-
-
-
-    // Number counters
-    ScrollTrigger.create({
-      trigger: "#metrics",
-      start: "top 80%",
-      onEnter: () => {
-        gsap.to({val: 0}, {val: 1.3, duration: 2, ease: "power3.out", onUpdate: function() {
-          document.getElementById('num-1').innerText = this.targets()[0].val.toFixed(1) + "M";
-        }});
-        gsap.to({val: 0}, {val: 800, duration: 2.5, ease: "power3.out", onUpdate: function() {
-          document.getElementById('num-2').innerText = Math.floor(this.targets()[0].val);
-        }});
-        gsap.to({val: 0}, {val: 5, duration: 1.5, ease: "power3.out", onUpdate: function() {
-          document.getElementById('num-3').innerText = Math.floor(this.targets()[0].val);
-        }});
       }
     });
 

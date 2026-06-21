@@ -45,15 +45,17 @@ Age: {patient_data.get('age', 'Unknown')}
 Gender: {patient_data.get('gender', 'Unknown')}
 Conditions: {', '.join(patient_data.get('conditions', []))}
 
-Generate a JSON object representing the medical report. It must contain:
+Generate a JSON object representing the medical report. It must contain EXACTLY these keys:
 1. "report_id": A random string like "REP-12345"
 2. "date": A date in YYYY-MM-DD format (recent)
-3. "type": "{report_type}"
-4. "doctor": A realistic doctor or lab technician name
-5. "summary": A brief 1-2 sentence summary of the findings.
-6. "details": A highly detailed, realistic string containing the full medical reading. 
-   - For Blood/Urine: include realistic values, reference ranges, and units in a tabular/structured text format.
-   - For X-Ray/MRI: include Clinical Indication, Findings, and Impression. Use medical jargon.
+3. "type": "{report_type.replace(' ', '_').lower()}"
+4. "name": "{report_type}"
+5. "doctor": A realistic doctor name
+6. "hospital": A realistic clinic or hospital name
+7. "hosp_id": "HSP_DEMO_001"
+8. "notes": A brief 1-2 sentence summary of the findings.
+9. "file_url": "/ui/assets/report_1.png" (Use this exact string for demo)
+10. "details": A highly detailed, realistic string containing the full medical reading. 
 
 Return ONLY valid JSON. No markdown formatting around the JSON block.
 """
@@ -82,7 +84,73 @@ def seed_fallback_patients_if_empty():
                 "gender": "Female",
                 "known_allergies": ["penicillin"],
                 "conditions": ["Cough", "Hypertension", "Joint Pain"],
-                "visits": []
+                "visits": [
+                    {
+                        "visit_id": "v-priya-1",
+                        "date": "2026-03-05",
+                        "doctor": "Dr. Patel (Nashik Clinic)",
+                        "diagnosis": ["Severe Cough"],
+                        "file_url": "/ui/assets/prescription_1.png",
+                        "medicines": [{"name": "Amoxicillin", "dose": "500mg"}]
+                    },
+                    {
+                        "visit_id": "v-priya-2",
+                        "date": "2026-03-10",
+                        "doctor": "City Hospital, Nashik",
+                        "diagnosis": ["Hypertension"],
+                        "file_url": "/ui/assets/prescription_2.png",
+                        "medicines": [{"name": "Amlodipine", "dose": "5mg"}]
+                    },
+                    {
+                        "visit_id": "v-priya-3",
+                        "date": "2026-03-15",
+                        "doctor": "Dr. Gupta's Clinic, Nashik",
+                        "diagnosis": ["Osteoarthritis"],
+                        "file_url": "/ui/assets/prescription_3.png",
+                        "medicines": [{"name": "Ibuprofen", "dose": "400mg"}]
+                    }
+                ],
+                "reports": [
+                    {
+                        "report_id": "rpt-priya-1",
+                        "type": "blood_test",
+                        "name": "Complete Blood Count (CBC)",
+                        "date": "2026-03-06",
+                        "doctor": "Dr. Patel",
+                        "hospital": "Nashik Clinic",
+                        "hosp_id": "HSP_NASHIK_001",
+                        "notes": "Post-treatment follow-up. WBC slightly elevated.",
+                        "file_url": "/ui/assets/report_1.png",
+                        "file_type": "image/jpeg",
+                        "created_at": "2026-03-06T12:00:00Z"
+                    },
+                    {
+                        "report_id": "rpt-priya-2",
+                        "type": "x_ray",
+                        "name": "Chest X-Ray (PA View)",
+                        "date": "2026-03-05",
+                        "doctor": "Dr. Patel",
+                        "hospital": "Nashik Clinic",
+                        "hosp_id": "HSP_NASHIK_001",
+                        "notes": "Mild bronchial thickening noted. No consolidation.",
+                        "file_url": "/ui/assets/report_2.png",
+                        "file_type": "image/jpeg",
+                        "created_at": "2026-03-05T14:00:00Z"
+                    },
+                    {
+                        "report_id": "rpt-priya-3",
+                        "type": "complete_health_report",
+                        "name": "Annual Health Checkup 2026",
+                        "date": "2026-03-01",
+                        "doctor": "Dr. Gupta",
+                        "hospital": "Gupta Clinic",
+                        "hosp_id": "HSP_NASHIK_002",
+                        "notes": "General health is good. Blood pressure is slightly elevated. Needs follow-up.",
+                        "file_url": "/ui/assets/report_3.png",
+                        "file_type": "image/jpeg",
+                        "created_at": "2026-03-01T10:00:00Z"
+                    }
+                ]
             },
             {
                 "patient_id": "demo-rahul-verma",
@@ -92,7 +160,8 @@ def seed_fallback_patients_if_empty():
                 "gender": "Male",
                 "known_allergies": ["sulfa drugs"],
                 "conditions": ["Diabetes Type 2", "Hyperlipidemia"],
-                "visits": []
+                "visits": [],
+                "reports": []
             }
         ]
         patients_collection.insert_many(fallback_patients)
@@ -105,6 +174,10 @@ def seed_database():
     report_types = ["Complete Blood Count (CBC)", "Chest X-Ray", "MRI Brain", "Urine Routine"]
 
     for patient in patients:
+        # Skip Priya Sharma as she has pre-seeded rich UI demo reports
+        if patient.get("patient_id") == "demo-priya-sharma":
+            continue
+            
         logger.info(f"Generating reports for {patient.get('name')} (Phone: {patient.get('phone')})...")
         new_reports = []
         for r_type in report_types:

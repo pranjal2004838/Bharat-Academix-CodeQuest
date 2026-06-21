@@ -144,6 +144,7 @@ in_memory_patients = [
                 "diagnosis": [
                     "Severe Cough"
                 ],
+                "file_url": "/ui/assets/prescription_1.png",
                 "medicines": [
                     {
                         "name": "Amoxicillin",
@@ -173,6 +174,7 @@ in_memory_patients = [
                     "High Blood Pressure",
                     "Hypertension"
                 ],
+                "file_url": "/ui/assets/prescription_2.png",
                 "medicines": [
                     {
                         "name": "Aspirin",
@@ -202,6 +204,7 @@ in_memory_patients = [
                     "Severe Joint Pain",
                     "Osteoarthritis"
                 ],
+                "file_url": "/ui/assets/prescription_3.png",
                 "medicines": [
                     {
                         "name": "Ibuprofen",
@@ -256,8 +259,8 @@ in_memory_patients = [
                 "doctor": "Dr. Patel",
                 "hospital": "Nashik Clinic",
                 "hosp_id": "HSP_NASHIK_001",
-                "notes": "Post-treatment follow-up. WBC slightly elevated.",
-                "file_url": None,
+                "notes": "Post-treatment follow-up. WBC slightly elevated. Hemoglobin normal.",
+                "file_url": "/ui/assets/report_1.png",
                 "file_type": "image/jpeg",
                 "created_at": "2026-03-06T12:00:00Z"
             },
@@ -270,7 +273,7 @@ in_memory_patients = [
                 "hospital": "Nashik Clinic",
                 "hosp_id": "HSP_NASHIK_001",
                 "notes": "Mild bronchial thickening noted. No consolidation.",
-                "file_url": None,
+                "file_url": "/ui/assets/report_2.png",
                 "file_type": "image/jpeg",
                 "created_at": "2026-03-05T14:00:00Z"
             },
@@ -278,14 +281,14 @@ in_memory_patients = [
                 "report_id": "rpt-priya-3",
                 "type": "complete_health_report",
                 "name": "Annual Health Checkup 2026",
-                "date": "2026-03-10",
-                "doctor": "City Hospital",
-                "hospital": "City Hospital, Nashik",
-                "hosp_id": "HSP_CITY_001",
-                "notes": "BP 145/92. Recommended lifestyle modification.",
-                "file_url": None,
-                "file_type": "application/pdf",
-                "created_at": "2026-03-10T16:00:00Z"
+                "date": "2026-03-01",
+                "doctor": "Dr. Gupta",
+                "hospital": "Gupta Clinic",
+                "hosp_id": "HSP_NASHIK_002",
+                "notes": "General health is good. Blood pressure is slightly elevated. Needs follow-up.",
+                "file_url": "/ui/assets/report_3.png",
+                "file_type": "image/jpeg",
+                "created_at": "2026-03-01T10:00:00Z"
             },
             {
                 "report_id": "rpt-priya-4",
@@ -1410,6 +1413,16 @@ async def get_prescription_image(phone: str, visit_id: str):
     visit = next((v for v in patient.get("visits", []) if v.get("visit_id") == visit_id), None)
     if not visit:
         return {"found": False, "message": "Visit not found"}
+    
+    file_url = visit.get("file_url")
+    if file_url:
+        return {
+            "found": True,
+            "url": file_url,
+            "content_type": "image/jpeg",
+            "visit_date": visit.get("date"),
+            "doctor": visit.get("doctor")
+        }
     
     source_doc = visit.get("source_document")
     if not source_doc or not isinstance(source_doc, dict):

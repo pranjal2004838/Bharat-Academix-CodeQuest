@@ -1482,7 +1482,8 @@ async def request_access_otp(payload: OTPRequestPayload):
         patient = next((p for p in in_memory_patients if p.get("phone") == phone_clean), None)
     
     if not patient:
-        return {"ok": False, "message": "Patient not found in records"}
+        # Allow new patient onboarding via OTP
+        patient = {"name": "New Patient", "phone": phone_clean}
     
     # Generate 6-digit OTP
     otp = str(_random.randint(100000, 999999))

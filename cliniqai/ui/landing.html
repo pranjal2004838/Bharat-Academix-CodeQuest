@@ -226,6 +226,7 @@
     .lenis.lenis-stopped { overflow: hidden; }
     .lenis.lenis-scrolling iframe { pointer-events: none; }
   </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body>
 
@@ -235,7 +236,7 @@
   <!-- SECTION 1: HERO -->
   <section class="hero-section">
     <!-- Heartbeat Lottie -->
-    <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_5n8yjz0h.json" background="transparent" speed="1" class="lottie-hero" loop autoplay></lottie-player>
+    <i class="fa-solid fa-heart-pulse fa-beat text-red-500" style="font-size: 150px; opacity: 0.9;"></i>
     
     <div class="text-emerald-500 font-semibold tracking-widest text-xs uppercase mb-8" style="opacity:0;" id="hackathon-tag">
       Bharat Academix Codequest 2026
@@ -269,7 +270,7 @@
           </div>
           <div class="w-48 h-48 flex-shrink-0">
              <!-- Woman Character Lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_9n2msv2f.json" background="transparent" speed="1" loop autoplay></lottie-player>
+             <i class="fa-solid fa-user-doctor fa-bounce text-indigo-500" style="font-size: 100px;"></i>
           </div>
         </div>
       </div>
@@ -279,7 +280,7 @@
         <div class="clinical-card flex flex-col md:flex-row items-center gap-6" id="card-2" style="background: rgba(16, 185, 129, 0.05); border-color: rgba(16, 185, 129, 0.2);">
           <div class="w-48 h-48 flex-shrink-0">
              <!-- Doctor Writing Lottie -->
-             <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_t24tpvcu.json" background="transparent" speed="1" loop autoplay></lottie-player>
+             <i class="fa-solid fa-notes-medical fa-pulse text-teal-500" style="font-size: 100px;"></i>
           </div>
           <div class="flex-1">
             <div class="text-emerald-500 text-xs font-bold tracking-widest uppercase mb-4">March 5, 2026 · Village Clinic</div>
@@ -307,7 +308,7 @@
           </div>
           <div class="w-48 h-48 flex-shrink-0 opacity-70">
              <!-- Filing Cabinet / Files Lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_vPnn3K.json" background="transparent" speed="1" loop autoplay></lottie-player>
+             <i class="fa-solid fa-folder-open fa-fade text-blue-500" style="font-size: 100px;"></i>
           </div>
         </div>
       </div>
@@ -320,7 +321,7 @@
         <div class="clinical-card flex flex-col items-center text-center" id="card-4" style="background: rgba(220,38,38, 0.1); border-color: rgba(220, 38, 38, 0.3); max-width: 800px;">
           <div class="w-32 h-32 mb-6">
              <!-- Ambulance / Emergency Lottie -->
-             <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" loop autoplay></lottie-player>
+             <i class="fa-solid fa-truck-medical fa-beat-fade text-red-500" style="font-size: 100px;"></i>
           </div>
           <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">1 Hour Later · Emergency</div>
           <h2 class="text-3xl font-black text-white heading-font mb-4">Anaphylactic Shock</h2>
@@ -340,7 +341,7 @@
           </div>
           <div class="w-48 h-48 flex-shrink-0 grayscale opacity-80">
              <!-- Family / Heartbreak Lottie -->
-             <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_1Lhku3.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+             <i class="fa-solid fa-house-chimney-crack fa-shake text-orange-500" style="font-size: 100px;"></i>
           </div>
         </div>
       </div>
@@ -350,7 +351,7 @@
         <div class="text-center w-full" id="card-6">
           <div class="w-32 h-32 mx-auto mb-6">
              <!-- Broken Heart Lottie -->
-             <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_5n8yjz0h.json" background="transparent" speed="1" loop autoplay></lottie-player>
+             <i class="fa-solid fa-heart-crack fa-beat text-red-600" style="font-size: 100px;"></i>
           </div>
           <div class="text-red-500 font-bold text-sm tracking-[0.3em] uppercase mb-6">The Hard Truth</div>
           <h2 class="text-6xl md:text-8xl font-black text-white heading-font mb-4 drop-shadow-[0_0_20px_rgba(220,38,38,0.5)]">100% PREVENTABLE</h2>
@@ -379,7 +380,7 @@
         <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
           <div class="h-32 mb-4 flex items-center justify-center bg-orange-50 rounded-xl relative overflow-hidden">
              <!-- Burning paper / fire lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_9n2msv2f.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-fire fa-fade text-orange-500" style="font-size: 100px;"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">Paper Registers</h3>
           <p class="text-gray-600 text-sm">Used by 95% of India's 1.3M clinics. Unsearchable, unsharable, prone to damage, and zero cross-clinic intelligence.</p>
@@ -389,7 +390,7 @@
         <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
           <div class="h-32 mb-4 flex items-center justify-center bg-red-50 rounded-xl relative overflow-hidden">
              <!-- Money flying lottie -->
-             <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_t24tpvcu.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-money-bill-transfer fa-beat text-green-500" style="font-size: 100px;"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">Enterprise EHRs</h3>
           <p class="text-gray-600 text-sm">Cost ₹37 Lakh+/year. Take 6-12 months to deploy. English-typed only. Completely unaffordable for small rural clinics.</p>
@@ -399,7 +400,7 @@
         <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
           <div class="h-32 mb-4 flex items-center justify-center bg-green-50 rounded-xl relative overflow-hidden">
              <!-- Chat chaos lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_vPnn3K.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-comments fa-bounce text-blue-500" style="font-size: 100px;"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">WhatsApp Chaos</h3>
           <p class="text-gray-600 text-sm">Doctors send prescription photos to patients. No structured data, no active safety checks, massive privacy violations.</p>
@@ -409,7 +410,7 @@
         <div class="bg-white rounded-2xl p-6 shadow-xl border border-gray-100 hover:-translate-y-2 transition-transform">
           <div class="h-32 mb-4 flex items-center justify-center bg-blue-50 rounded-xl relative overflow-hidden">
              <!-- ID card / vault lottie -->
-             <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="height:100px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-id-card-clip fa-flip text-slate-500" style="font-size: 100px;"></i>
           </div>
           <h3 class="text-xl font-bold mb-2 text-gray-900 heading-font">ABHA (Currently)</h3>
           <p class="text-gray-600 text-sm">A great record vault, but passive. No handwriting OCR, no active drug interaction alerts. It stores data, but doesn't actively prevent harm.</p>
@@ -422,7 +423,7 @@
   <section class="dark-section relative overflow-hidden" id="solution">
     <div class="absolute inset-0 z-0 flex justify-center opacity-30 pointer-events-none">
       <!-- Confetti Lottie Background -->
-      <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_1Lhku3.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+      <i class="fa-solid fa-star of-life fa-spin text-indigo-200" style="font-size: 100px; opacity: 0.2;"></i>
     </div>
     
     <div class="max-w-6xl mx-auto relative z-10">
@@ -490,7 +491,7 @@
           <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-start">
             <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center border border-gray-100">
               <!-- Phone/Camera Lottie -->
-              <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_5n8yjz0h.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+              <i class="fa-solid fa-mobile-screen fa-shake text-indigo-500" style="font-size: 100px;"></i>
             </div>
           </div>
         </div>
@@ -508,7 +509,7 @@
           <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-end md:justify-start">
             <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center mr-0 md:mr-16 border border-gray-100">
               <!-- Brain Lottie -->
-              <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_9n2msv2f.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+              <i class="fa-solid fa-brain fa-pulse text-pink-500" style="font-size: 100px;"></i>
             </div>
           </div>
         </div>
@@ -529,7 +530,7 @@
               <div class="bg-white p-8 rounded-3xl shadow-xl border border-gray-100 text-center hover:shadow-2xl transition-shadow">
                 <div class="h-24 mb-6 flex justify-center">
                   <!-- Database Search Lottie -->
-                  <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_t24tpvcu.json" background="transparent" speed="1" style="height: 100px" loop autoplay></lottie-player>
+                  <i class="fa-solid fa-database fa-fade text-slate-500" style="font-size: 100px;"></i>
                 </div>
                 <h4 class="font-bold text-purple-600 text-xl mb-3 heading-font">3A. Patient Context Agent 🔍</h4>
                 <p class="text-gray-600 text-sm">Queries MongoDB Atlas via MCP using the patient's phone number. Fetches complete history, past diagnoses, and known allergies across all clinics.</p>
@@ -541,7 +542,7 @@
                 <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/5 rounded-bl-full -z-10"></div>
                 <div class="h-24 mb-6 flex justify-center">
                   <!-- Shield Lottie -->
-                  <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_vPnn3K.json" background="transparent" speed="1" style="height: 100px" loop autoplay></lottie-player>
+                  <i class="fa-solid fa-shield-halved fa-beat text-green-500" style="font-size: 100px;"></i>
                 </div>
                 <h4 class="font-bold text-red-500 text-xl mb-3 heading-font">3B. Safety Agent 🛡️</h4>
                 <p class="text-gray-600 text-sm">Cross-references new drugs with patient history & WHO Essential Medicines List. If a severe conflict exists, it creates a <strong class="text-red-500">HARD BLOCKING GATE</strong>.</p>
@@ -564,7 +565,7 @@
           <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-start">
             <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center border border-gray-100">
               <!-- Success / Checkmark Lottie -->
-              <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+              <i class="fa-solid fa-circle-check fa-beat text-green-500" style="font-size: 100px;"></i>
             </div>
           </div>
         </div>
@@ -581,7 +582,7 @@
           <div class="w-full md:w-1/2 pl-8 md:pl-16 mt-8 md:mt-0 flex justify-end md:justify-start">
             <div class="w-48 h-48 bg-white rounded-3xl shadow-xl flex items-center justify-center mr-0 md:mr-16 border border-gray-100">
                <!-- Doctor Celebration Lottie -->
-               <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_1Lhku3.json" background="transparent" speed="1" style="height: 120px" loop autoplay></lottie-player>
+               <i class="fa-solid fa-user-doctor fa-bounce text-indigo-500" style="font-size: 100px;"></i>
             </div>
           </div>
         </div>
@@ -656,7 +657,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- Rural Clinic Lottie -->
-             <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_5n8yjz0h.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-house-medical fa-beat text-teal-500" style="font-size: 120px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Rural Clinic Visit</h4>
           <p class="text-gray-600 text-sm">A doctor in a small village clinic seeing 80+ patients a day. He has one smartphone. He snaps a photo. One tap. CliniqAI instantly reads the prescription and updates the global record.</p>
@@ -666,7 +667,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- ER Lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_9n2msv2f.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-truck-fast fa-shake text-red-500" style="font-size: 120px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Emergency Room</h4>
           <p class="text-gray-600 text-sm">A patient arrives unconscious. The ER doctor searches their phone number. The entire medical history, blood type, and life-threatening allergies appear on screen in seconds.</p>
@@ -676,7 +677,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- Pills/Medicine Lottie -->
-             <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_t24tpvcu.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-capsules fa-bounce text-purple-500" style="font-size: 120px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Cross-Clinic Conflict</h4>
           <p class="text-gray-600 text-sm">A patient visits three different specialists. Doctor C prescribes Aspirin, unaware Doctor A prescribed Ibuprofen yesterday. CliniqAI catches the severe GI bleeding risk.</p>
@@ -686,7 +687,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- Family Lottie -->
-             <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_vPnn3K.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-people-roof fa-fade text-blue-500" style="font-size: 120px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Family Management</h4>
           <p class="text-gray-600 text-sm">A mother managing medications for elderly parents across multiple specialists can view all prescriptions, dosages, and reports in one unified, simple portal.</p>
@@ -696,7 +697,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- Pregnancy Lottie -->
-             <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-person-pregnant fa-beat text-pink-500" style="font-size: 120px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Pregnancy Care</h4>
           <p class="text-gray-600 text-sm">An OB-GYN instantly sees all medications an expectant mother is taking and the system automatically flags any Category X (teratogenic) drugs.</p>
@@ -706,7 +707,7 @@
         <div class="bg-white p-8 rounded-3xl shadow-lg border border-gray-100 hover:shadow-2xl transition-all group">
           <div class="h-40 bg-gray-50 rounded-2xl mb-6 flex items-center justify-center overflow-hidden">
              <!-- Health Camp Lottie -->
-             <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_1Lhku3.json" background="transparent" speed="1" style="height:150px" loop autoplay></lottie-player>
+             <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
           </div>
           <h4 class="font-bold text-xl mb-3 heading-font">Remote Health Camps</h4>
           <p class="text-gray-600 text-sm">An NGO running a health camp in a remote village uses CliniqAI to create instant, permanent digital records for patients who have never had one.</p>
@@ -734,7 +735,7 @@
         </div>
         <div class="w-full md:w-1/2 bg-blue-50/50 rounded-[3rem] p-8 flex justify-center border border-blue-100">
            <!-- Chatbot Lottie -->
-           <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_5n8yjz0h.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+           <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
         </div>
       </div>
 
@@ -760,7 +761,7 @@
         </div>
         <div class="w-full md:w-1/2 bg-emerald-50/50 rounded-[3rem] p-8 flex justify-center border border-emerald-100">
            <!-- Documents Lottie -->
-           <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_9n2msv2f.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+           <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
         </div>
       </div>
 
@@ -795,7 +796,7 @@
         </div>
         <div class="w-full md:w-1/2 bg-purple-50/50 rounded-[3rem] p-8 flex justify-center border border-purple-100">
            <!-- Security Lottie -->
-           <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_t24tpvcu.json" background="transparent" speed="1" style="height: 350px" loop autoplay></lottie-player>
+           <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
         </div>
       </div>
 
@@ -814,7 +815,7 @@
         </p>
         <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full h-[400px] opacity-10 pointer-events-none">
           <!-- India Map / Network Lottie -->
-          <lottie-player src="https://assets1.lottiefiles.com/packages/lf20_vPnn3K.json" background="transparent" speed="0.5" loop autoplay></lottie-player>
+          <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
         </div>
       </div>
 
@@ -822,7 +823,7 @@
       <div class="bg-gray-800 rounded-[3rem] p-8 md:p-16 border border-gray-700 relative overflow-hidden shadow-2xl">
         <div class="absolute bottom-0 right-0 opacity-20 pointer-events-none">
            <!-- Handshake / Bridge Lottie -->
-           <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_jbrw3hcz.json" background="transparent" speed="1" style="height: 400px" loop autoplay></lottie-player>
+           <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
         </div>
         
         <h3 class="text-3xl md:text-4xl font-black heading-font text-white mb-4 relative z-10">How We Supplement ABHA</h3>
@@ -942,7 +943,7 @@
   <section class="dark-section text-center py-32 relative overflow-hidden">
     <div class="absolute inset-0 z-0 flex justify-center opacity-20 pointer-events-none">
        <!-- Rocket Lottie -->
-       <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_1Lhku3.json" background="transparent" speed="0.5" style="height: 100%" loop autoplay></lottie-player>
+       <i class="fa-solid fa-kit-medical fa-beat text-indigo-500" style="font-size: 100px;"></i>
     </div>
     <div class="relative z-10">
       <h2 class="text-5xl font-black heading-font text-white mb-8">Experience the Difference</h2>

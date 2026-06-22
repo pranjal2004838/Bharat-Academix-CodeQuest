@@ -238,14 +238,9 @@
     <!-- Heartbeat Lottie -->
     <i class="fa-solid fa-heart-pulse fa-beat text-red-500" style="font-size: 150px; opacity: 0.9;"></i>
     
-    <div class="text-emerald-500 font-semibold tracking-widest text-xs uppercase mb-8" style="opacity:0;" id="hackathon-tag">
-      Bharat Academix Codequest 2026
+    <div class="w-full max-w-4xl px-6" id="hero-img-container" style="opacity:0; transform: scale(1.15);">
+      <img src="/ui/landing_hero_text.png" alt="A Patient's Medical History Shouldn't Die With a Notebook." class="w-full h-auto object-contain mx-auto" />
     </div>
-    <div class="scramble-text" id="scramble">Initializing record search...</div>
-    <h1 class="hero-main-text heading-font">
-      A Patient's Medical History<br>
-      <span class="text-gray-600 block mt-2" id="shouldnt-die">Shouldn't Die With a Notebook.</span>
-    </h1>
     
     <div class="absolute bottom-10 flex flex-col items-center opacity-50">
       <div class="text-xs tracking-widest mb-2">SCROLL TO DISCOVER</div>
@@ -1035,10 +1030,7 @@
     
     // Act I: Intro
     const tlIntro = gsap.timeline();
-    tlIntro.to("#hackathon-tag", {opacity: 1, duration: 1, delay: 0.5})
-           .to("#scramble", {text: "A Patient's Medical History", duration: 1.5, ease: "none"})
-           .to(".hero-main-text", {opacity: 1, scale: 1, duration: 1.2, ease: "expo.out"}, "+=0.5")
-           .to("#shouldnt-die", {color: "#DC2626", duration: 1}, "+=0.2");
+    tlIntro.to("#hero-img-container", {opacity: 1, scale: 1, duration: 1.8, ease: "expo.out", delay: 0.5});
 
     gsap.to("#scroll-line", {
       top: "100%",

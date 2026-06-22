@@ -101,18 +101,25 @@ Real statistics, a powerful visual timeline of a preventable medical error, and 
 
 ![Landing Page](docs/screenshots/landing.png)
 
-### 2. Clinic Dashboard — The Doctor's Command Center
-Search patients by phone number instantly.
+### 2. Dual Login — Clinic Mode & Patient Mode
+Pre-filled demo credentials for instant testing. No setup friction.
+
+| Clinic Login | Patient Login |
+|:---:|:---:|
+| ![Clinic Login](docs/screenshots/login_clinic.png) | ![Patient Login](docs/screenshots/login_patient.png) |
+
+### 3. Clinic Dashboard — The Doctor's Command Center
+Search patients by phone number instantly, view session state, and see unified records activity.
 
 ![Clinic Dashboard](docs/screenshots/hospital_dashboard.png)
 
-### 3. Patient Clinical File — Total Medical Intelligence
-The RED ALERT blocking gate in action. If a doctor prescribes Ibuprofen to a patient already on Aspirin, CliniqAI flags the GI bleeding risk immediately.
+### 4. Patient Clinical File — Total Medical Intelligence
+Unified patient clinical file showing prior prescriptions, active visits history, known patient allergies, clinical safety checks, and the AI Clinical Assistant.
 
 ![Patient Detail View](docs/screenshots/patient_detail.png)
 
-### 4. Patient Portal — True Data Sovereignty
-Patients can view all their records from all clinics, see the original document scans (kept perfectly intact in Cloud Storage), and manage access permissions.
+### 5. Patient Portal — True Data Sovereignty
+Patients can view all their records from all clinics, see the health summary and recent visits timeline, and ask the chatbot questions.
 
 ![Patient Portal](docs/screenshots/patient_portal.png)
 

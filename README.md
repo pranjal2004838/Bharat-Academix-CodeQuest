@@ -9,7 +9,7 @@
 [![Gemini 3.5 Flash](https://img.shields.io/badge/Gemini_3.5_Flash-Vertex_AI-FF6D00?style=for-the-badge&logo=google-cloud)](https://cloud.google.com/vertex-ai)
 [![MongoDB Atlas MCP](https://img.shields.io/badge/MongoDB_Atlas-MCP_Server-00ED64?style=for-the-badge&logo=mongodb)](https://www.mongodb.com/atlas)
 
-**👉 [TRY IT LIVE RIGHT NOW](https://cliniqai-1072937704425.asia-south1.run.app) 👈**
+**👉 [TRY IT LIVE RIGHT NOW](https://bharat-academix-codequest-1072937704425.asia-south1.run.app/) 👈**
 > *Demo credentials pre-filled. Just click Login.*
 
 </div>

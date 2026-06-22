@@ -100,6 +100,7 @@ CliniqAI does **NOT** compete with the Ayushman Bharat Digital Mission (ABDM). W
 Real statistics, a powerful visual timeline of a preventable medical error, and a clear presentation of how CliniqAI acts as a safety bridge.
 
 ![Landing Page](docs/screenshots/landing.png)
+*Figure 2: The CliniqAI Landing Page hero section, highlighting the core mission: "A Patient's Medical History Shouldn't Die With a Notebook."*
 
 ### 2. Dual Login — Clinic Mode & Patient Mode
 Pre-filled demo credentials for instant testing. No setup friction.

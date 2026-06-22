@@ -98,6 +98,7 @@ app.add_middleware(
 # ─── Request Models ───────────────────────────────────────────────────────────
 class QueryRequest(BaseModel):
     query: str
+    language: str | None = "en"
 
 
 class AlertAcknowledgeRequest(BaseModel):
@@ -111,6 +112,7 @@ class ChatRequest(BaseModel):
     query: str
     phone: str | None = None
     doctor_id: str | None = None
+    language: str | None = "en"
 
 class ProcessRequest(BaseModel):
     """Request model for processing with phone number"""
@@ -1020,6 +1022,7 @@ async def process_document_async(
 async def process_document(
     request: Request,
     phone: str = Form(...),  # Phone number from form (required)
+    language: str = Form("en"),
     file: UploadFile = File(...)
 ):
     """
@@ -1676,7 +1679,7 @@ def _rule_based_chat(context: str, question: str) -> str:
     return "Please check the patient record panel for full details."
 
 
-async def _query_gemini_chat(context: str, question: str, history: list = None) -> str:
+async def _query_gemini_chat(context: str, question: str, history: list = None, language: str = "en") -> str:
     api_key = os.getenv("GOOGLE_API_KEY", "")
     if not api_key or "your_google" in api_key:
         return _rule_based_chat(context, question)
@@ -1690,9 +1693,12 @@ async def _query_gemini_chat(context: str, question: str, history: list = None) 
                 role = "Doctor" if msg.get("role") == "user" else "Assistant"
                 history_lines.append(f"{role}: {msg.get('text', '')}")
 
+        lang_instruction = f"IMPORTANT: Generate your response in {language}. Use authentic local slang and regional terminology where appropriate." if language != "en" else ""
+
         lines = [
             "You are a clinical AI assistant for a doctor. Answer concisely and clinically.",
             "Use ONLY the patient information provided. If not available, say so clearly.",
+            lang_instruction,
             "",
             "PATIENT RECORD:",
             context,
@@ -1752,7 +1758,7 @@ async def chat(payload: ChatRequest):
 
     # ── Build context and query Gemini ──
     context = _build_patient_context(patient)
-    answer = await _query_gemini_chat(context, payload.query, existing_history)
+    answer = await _query_gemini_chat(context, payload.query, existing_history, payload.language)
 
     # ── Append new messages ──
     ts = datetime.utcnow().isoformat() + "Z"

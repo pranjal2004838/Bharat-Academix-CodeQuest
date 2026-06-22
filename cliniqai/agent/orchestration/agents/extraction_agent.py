@@ -46,7 +46,7 @@ class ExtractionAgent:
         with an error flag but does NOT raise — the supervisor handles errors.
         """
         # Run sync extraction off the event loop so Supervisor can parallelize safely.
-        raw = await asyncio.to_thread(self._extract, image_bytes)
+        raw = await asyncio.to_thread(self._extract, image_bytes, state.request.language)
 
         if "error" in raw:
             state.extracted_data = ExtractedData(

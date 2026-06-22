@@ -109,7 +109,7 @@
         <div class="chat-header">
           <span data-i18n="aiAssistant">AI Health Assistant</span>
         </div>
-        <div id="chat-messages" class="chat-body">
+        <div id="chat-messages" class="chat-body notranslate">
           <div class="chat-msg-bot">
             Hi! I am your AI assistant. You can ask me anything about your medicines, side effects, or recent visits.
           </div>
@@ -331,5 +331,14 @@
     loadAccessGrants();
   </script>
 <script src="/ui/i18n.js"></script>
+
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'hi,te,bn,mr,ta,en', autoDisplay: false}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 </body>
 </html>

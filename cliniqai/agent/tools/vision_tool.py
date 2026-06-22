@@ -9,7 +9,7 @@ from dotenv import load_dotenv
 # Load API keys from .env file
 load_dotenv()
 
-def extract_from_prescription(image_bytes: bytes) -> dict:
+def extract_from_prescription(image_bytes: bytes, language: str = "en") -> dict:
     """
     Takes a photo of a prescription or lab report.
     Returns structured patient data as a Python dictionary.
@@ -82,7 +82,7 @@ def extract_from_prescription(image_bytes: bytes) -> dict:
     }
     
     Important:
-    1. If the document is in a regional Indian language, translate all extracted content to English.
+    1. Translate all extracted content (like diagnosis, medicine frequency, instructions, notes) to {language}, using authentic local slang/terms if applicable. Names of medicines should remain in standard English if appropriate, but instructions must be in {language}.
     2. Return ONLY the JSON. No preamble, no explanation.
     3. Be very precise with medicine names.
     4. Confidence scores must be numbers between 0.0 and 1.0.

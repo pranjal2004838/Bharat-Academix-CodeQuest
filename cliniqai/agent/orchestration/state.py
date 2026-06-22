@@ -51,6 +51,7 @@ class RequestMeta(BaseModel):
     content_type: Optional[str] = None
     gcs_uri: Optional[str] = None
     gcs_upload_result: Optional[dict] = None
+    language: str = "en"
 
 
 class ExtractedData(BaseModel):

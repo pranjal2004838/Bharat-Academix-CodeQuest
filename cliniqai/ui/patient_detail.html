@@ -423,7 +423,7 @@
     </div>
 
     <!-- Chat Messages Window -->
-    <div id="chat-messages" class="flex-1 overflow-y-auto p-1 py-3 space-y-3.5 flex flex-col bg-slate-50/50 rounded-xl my-3">
+    <div id="chat-messages" class="flex-1 overflow-y-auto p-1 py-3 space-y-3.5 flex flex-col bg-slate-50/50 rounded-xl my-3 notranslate">
       <div class="chat-msg-bot">
         Hi, Doctor! Ask me anything about this patient's history, medicines, or allergies.
       </div>
@@ -1073,7 +1073,7 @@ async function sendChatMessage() {
     const res = await fetch(`${API}/chat`, {
       method: 'POST',
       headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ query: q, phone: phone, doctor_id: loggedDoc }),
+      body: JSON.stringify({ query: q, phone: phone, doctor_id: loggedDoc, language: localStorage.getItem('selectedLang') || 'en' }),
     });
     const data = await res.json();
     typing.classList.add('hidden');
@@ -1161,5 +1161,14 @@ function showToast(msg, type='info') {
 loadPatientDetails();
 </script>
 <script src="/ui/i18n.js"></script>
+
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'hi,te,bn,mr,ta,en', autoDisplay: false}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
 </body>
 </html>

@@ -72,6 +72,7 @@ class Supervisor:
         content_type: str | None = None,
         gcs_upload_result: dict | None = None,
         extracted_override: dict | None = None,
+        language: str = "en",
     ) -> WorkflowState:
         """
         Execute the full multi-agent workflow.
@@ -94,6 +95,7 @@ class Supervisor:
                 ip_address=ip_address,
                 content_type=content_type,
                 gcs_upload_result=gcs_upload_result,
+                language=language,
             ),
             status=WorkflowStatus.IN_PROGRESS,
         )
@@ -104,7 +106,7 @@ class Supervisor:
 
         if extracted_override is not None:
             # Test/mock path: inject pre-extracted data without calling Gemini.
-            mock_agent = ExtractionAgent(extraction_fn=lambda _bytes: extracted_override)
+            mock_agent = ExtractionAgent(extraction_fn=lambda _bytes, _lang: extracted_override)
             extraction_task = self._run_agent_with_trace(
                 state,
                 "ExtractionAgent",

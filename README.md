@@ -131,7 +131,7 @@ Patients can view all their records from all clinics, see the health summary and
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/pranjaljha103/CliniqAI.git
+git clone https://github.com/pranjal2004838/CliniqAI.git
 cd CliniqAI
 
 # 2. Set up environment

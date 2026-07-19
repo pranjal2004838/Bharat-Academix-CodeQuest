@@ -65,7 +65,7 @@ The Cloud Build / Compute Service Account (`1072937704425-compute@developer.gser
 
 ```bash
 cd ~
-git clone https://github.com/pranjaljha103/CliniqAI.git
+git clone https://github.com/pranjal2004838/CliniqAI.git
 cd CliniqAI
 ```
 

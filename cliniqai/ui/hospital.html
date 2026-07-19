@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CliniqAI — Clinic Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Inter', sans-serif; background: #f8fafc; color: #0f172a; height: 100vh; overflow: hidden; }
+
+    /* ── Scrollbars ── */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+    /* ── Cards / panels ── */
+    .card {
+      background: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      padding: 18px;
+      transition: all .25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .card:hover { box-shadow: 0 10px 25px -5px rgba(0,0,0,.05), 0 8px 10px -6px rgba(0,0,0,.03); border-color: #cbd5e1; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: #10b981;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 12px 18px;
+      font-size: .85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all .2s;
+      width: 100%;
+    }
+    .btn-primary:hover { background: #059669; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(16,185,129,.25); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { background: #a7f3d0; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    .btn-ghost {
+      background: transparent;
+      color: #475569;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 8px 14px;
+      font-size: .8rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .2s;
+    }
+    .btn-ghost:hover { background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; }
+
+    /* ── Input ── */
+    .input-field {
+      width: 100%;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: .85rem;
+      color: #0f172a;
+      background: #fafafa;
+      outline: none;
+      transition: border-color .2s, box-shadow .2s;
+      font-family: 'Inter', sans-serif;
+    }
+    .input-field:focus { border-color: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.12); background: white; }
+
+    /* ── Drop zone ── */
+    .drop-zone {
+      border: 2px dashed #cbd5e1;
+      border-radius: 16px;
+      padding: 32px 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+      background: #f8fafc;
+    }
+    .drop-zone:hover, .drop-zone.drag-over {
+      border-color: #10b981;
+      background: #f0fdf4;
+    }
+
+    /* ── Badges ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 4px 10px;
+      border-radius: 999px;
+    }
+    .badge-red    { background: #fee2e2; color: #dc2626; }
+    .badge-green  { background: #d1fae5; color: #059669; }
+    .badge-blue   { background: #dbeafe; color: #2563eb; }
+    .badge-slate  { background: #f1f5f9; color: #475569; }
+
+    /* ── Spinner ── */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,.4);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+    .spinner-dark {
+      width: 18px; height: 18px;
+      border: 2px solid rgba(16,185,129,.2);
+      border-top-color: #10b981;
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+      display: inline-block;
+    }
+
+    /* ── Patient avatar ── */
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: .8rem;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+
+    /* ── Recent patient row ── */
+    .recent-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all .15s ease;
+      background: white;
+    }
+    .recent-row:hover { background: #f8fafc; border-color: #e2e8f0; transform: translateX(2px); }
+
+    /* ── Fade in animation ── */
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .fade-in { animation: fadeIn .4s ease forwards; }
+
+    @media (max-width: 1024px) {
+      body { overflow: auto; height: auto; }
+      .main-layout { flex-direction: column !important; height: auto !important; padding: 16px !important; gap: 16px; }
+      .column-panel { width: 100% !important; height: auto !important; }
+    }
+  </style>
+</head>
+<body class="flex flex-col">
+
+<!-- ──────────────────────────────────── -->
+<!-- TOP BAR                             -->
+<!-- ──────────────────────────────────── -->
+<header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0 z-50" style="height:56px">
+  <div class="flex items-center gap-3">
+    <a href="/hospital" class="flex items-center gap-2 group">
+      <div class="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center text-white text-xs font-bold shadow-sm group-hover:bg-emerald-700 transition-colors">C</div>
+      <div>
+        <div class="font-bold text-sm text-slate-900 leading-none">CliniqAI</div>
+        <div class="text-[10px] text-slate-400 leading-none mt-0.5" data-i18n="clinicDashboard">Clinic Dashboard</div>
+      </div>
+    </a>
+    <span class="text-slate-200 hidden md:inline">|</span>
+    <span id="doctor-info-header" class="text-xs text-slate-500 font-medium hidden md:inline">Loading credentials...</span>
+  </div>
+
+  <div class="flex items-center gap-3">
+    <!-- Language Selector -->
+    <select id="languageSelect" onchange="changeLanguage(this.value)" class="bg-slate-50 border border-slate-200 text-slate-700 text-xs rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-1.5 font-medium">
+      <option value="en">EN</option>
+      <option value="hi">HI</option>
+      <option value="bn">BN</option>
+      <option value="te">TE</option>
+      <option value="mr">MR</option>
+      <option value="ta">TA</option>
+    </select>
+    <span id="db-badge" class="badge badge-blue">
+      <span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block animate-pulse"></span> Connecting...
+    </span>
+  </div>
+</header>
+
+
+<!-- ──────────────────────────────────── -->
+<!-- MAIN LAYOUT: 3 COLUMNS              -->
+<!-- ──────────────────────────────────── -->
+<div class="main-layout flex flex-1 overflow-hidden p-6 gap-6" style="height: calc(100vh - 56px)">
+
+  <!-- ════════════════════════════════ -->
+  <!-- COLUMN 1: DOCTOR & STATS        -->
+  <!-- ════════════════════════════════ -->
+  <div class="column-panel flex flex-col gap-4 overflow-y-auto" style="width: 25%; min-width: 250px">
+    
+    <!-- Doctor Profile Card -->
+    <div class="card bg-gradient-to-br from-emerald-600 to-teal-700 text-white border-none shadow-md">
+      <div class="flex items-center gap-4 mb-5">
+        <div class="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-2xl border border-white/30">
+          👨‍⚕️
+        </div>
+        <div>
+          <h2 id="doc-name-display" class="font-bold text-sm tracking-wide">Dr. Assistant</h2>
+          <p id="doc-id-display" class="text-[10px] text-white/80">ID: —</p>
+        </div>
+      </div>
+      
+      <div class="space-y-3 text-xs border-t border-white/20 pt-4">
+        <div class="flex justify-between items-center">
+          <span class="text-white/85">Current Clinic:</span>
+          <span id="doc-hosp-display" class="font-semibold text-right max-w-[60%] truncate">—</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-white/85">Patients Seen Today:</span>
+          <span id="doc-stats-today" class="bg-white/20 px-2.5 py-0.5 rounded-full font-bold">0</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-white/85">Patients (All Time):</span>
+          <span id="doc-stats-total" class="bg-white/20 px-2.5 py-0.5 rounded-full font-bold">—</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-white/85">Last Login:</span>
+          <span id="doc-login-ts" class="text-white/90 text-right text-[10px] max-w-[55%]">—</span>
+        </div>
+        <div class="flex justify-between items-center">
+          <span class="text-white/85">Session State:</span>
+          <span class="flex items-center gap-1.5">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            Active
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Action / Tips Card -->
+    <div class="card">
+      <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Clinical Quick Tips</h3>
+      <ul class="text-xs text-slate-600 space-y-3 leading-relaxed">
+        <li class="flex gap-2">
+          <span class="text-emerald-500 font-bold">✓</span>
+          <span>Search or pick a patient in the directory to view complete medical files, history, and chat.</span>
+        </li>
+        <li class="flex gap-2">
+          <span class="text-emerald-500 font-bold">✓</span>
+          <span>To record a new visit, enter the patient number and upload their prescription on the right.</span>
+        </li>
+        <li class="flex gap-2">
+          <span class="text-emerald-500 font-bold">✓</span>
+          <span>Our AI system automatically verifies drug-drug interactions and allergies upon saving.</span>
+        </li>
+      </ul>
+    </div>
+
+    <!-- DB Stats and Info Card -->
+    <div class="card flex flex-col justify-between flex-1 min-h-[140px]">
+      <div>
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cloud Connectivity</h3>
+        <p class="text-xs text-slate-500 leading-relaxed mb-4">
+          All reports are processed via Gemini 3.5 and securely logged with encrypted PII.
+        </p>
+      </div>
+      <div class="border-t border-slate-100 pt-3 flex items-center justify-between">
+        <span class="text-[11px] font-semibold text-slate-500">Service Status</span>
+        <span class="badge badge-green">Nominal</span>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════ -->
+  <!-- COLUMN 2: PATIENT DIRECTORY     -->
+  <!-- ════════════════════════════════ -->
+  <div class="column-panel flex flex-col gap-4 overflow-hidden" style="width: 40%; min-width: 320px">
+    
+    <!-- Search Card -->
+    <div class="card shrink-0">
+      <label class="text-xs font-bold text-slate-500 mb-2.5 block uppercase tracking-wider">Lookup Patient Records</label>
+      <div class="flex gap-2">
+        <input id="search-phone" class="input-field" type="tel" placeholder="Enter mobile number..."
+          onkeydown="if(event.key==='Enter') searchPatient()" maxlength="15" />
+        <button class="btn-primary w-24 shrink-0" onclick="searchPatient()">
+          Search
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Result Area -->
+    <div id="search-result" class="hidden fade-in shrink-0"></div>
+
+    <!-- Directory List (Scrollable) -->
+    <div class="card flex flex-col flex-1 overflow-hidden">
+      <div class="flex justify-between items-center mb-4 border-b border-slate-100 pb-2">
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest">Recent Patients</h3>
+        <span id="patient-count-badge" class="badge badge-slate">0 seen today</span>
+      </div>
+      
+      <div id="recent-list" class="flex-1 overflow-y-auto space-y-2 pr-1">
+        <div class="text-xs text-slate-300 text-center py-8"><span class="spinner-dark mr-2"></span>Loading Directory…</div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════════════════════════════ -->
+  <!-- COLUMN 3: NEW DOCUMENT UPLOAD   -->
+  <!-- ════════════════════════════════ -->
+  <div class="column-panel flex flex-col gap-4 overflow-y-auto" style="width: 35%; min-width: 300px">
+    
+    <div class="card flex flex-col flex-1 gap-4">
+      <div>
+        <h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Process New Prescription</h3>
+        <p class="text-xs text-slate-500">Extract medications and register visit instantly</p>
+      </div>
+
+      <!-- Phone for upload -->
+      <div>
+        <label class="text-[11px] font-bold text-slate-500 mb-1.5 block">Patient Mobile Number</label>
+        <input id="upload-phone" class="input-field" type="tel" placeholder="e.g., 9876543210" maxlength="15" />
+      </div>
+
+      <!-- Drop zone -->
+      <div id="drop-zone" class="drop-zone flex-1 flex flex-col items-center justify-center min-h-[160px]" onclick="document.getElementById('file-input').click()"
+        ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="text-4xl mb-3">📄</div>
+        <p class="text-sm font-semibold text-slate-700 mb-1">Drop prescription document</p>
+        <p class="text-xs text-slate-400">PDF · JPG · PNG (Supports handwriting)</p>
+        <input id="file-input" type="file" accept=".jpg,.jpeg,.png,.pdf" class="hidden" onchange="previewFile(event)" />
+      </div>
+
+      <!-- Preview image -->
+      <img id="preview" class="hidden rounded-xl border border-slate-200 max-h-32 object-contain w-full" />
+
+      <!-- Action Button -->
+      <button id="extract-btn" class="btn-primary" onclick="processDocument()" disabled>
+        <svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Extract &amp; View File
+      </button>
+
+      <!-- Progress Indicators -->
+      <div id="progress-wrap" class="hidden">
+        <div class="flex justify-between text-xs text-slate-400 mb-1.5">
+          <span id="progress-label">Processing document…</span>
+          <span id="progress-pct">0%</span>
+        </div>
+        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+          <div id="progress-bar" class="h-full bg-emerald-500 rounded-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+
+    </div>
+
+</div>
+
+
+<!-- ──────────────────────────────────── -->
+<!-- SCRIPTS                             -->
+<!-- ──────────────────────────────────── -->
+<script>
+const API = window.location.protocol === 'file:' ? 'http://localhost:8000' : '';
+let currentPatientPhone = null;
+
+// ── Login Guard ──
+// Redirect to /login if doctor has not authenticated
+const loggedDoc  = localStorage.getItem('docId');
+const loggedHosp = localStorage.getItem('hospId');
+const loginTs    = localStorage.getItem('loginTs');
+
+if (!loggedDoc) {
+  window.location.replace('/login');
+  throw new Error('Not authenticated');
+}
+
+// ── Doctor Profile Info ──
+document.getElementById('doc-id-display').textContent   = `ID: ${loggedDoc}`;
+document.getElementById('doc-hosp-display').textContent = loggedHosp || '—';
+
+// Format last login timestamp
+if (loginTs) {
+  try {
+    const d = new Date(loginTs);
+    const today = new Date();
+    const isToday = d.toDateString() === today.toDateString();
+    const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('doc-login-ts').textContent =
+      isToday ? `Today, ${timeStr}` : `${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}, ${timeStr}`;
+  } catch (e) {
+    document.getElementById('doc-login-ts').textContent = '—';
+  }
+}
+
+// Deduce display name from doctor ID
+let docName = 'Dr. Clinic Assistant';
+if (loggedDoc.toLowerCase().includes('sharma')) docName = 'Dr. Sharma';
+else if (loggedDoc.toLowerCase().includes('patel')) docName = 'Dr. Patel';
+else if (loggedDoc.toLowerCase().includes('demo')) docName = 'Dr. Demo Assistant';
+else {
+  let cleanName = loggedDoc.replace(/^DR_/i, '').replace(/_/g, ' ');
+  docName = 'Dr. ' + cleanName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+}
+document.getElementById('doc-name-display').textContent    = docName;
+document.getElementById('doctor-info-header').textContent  = `${docName} · ${loggedHosp || ''}`;
+
+// Verify MongoDB Connection status
+async function checkHealth() {
+  try {
+    const res = await fetch(`${API}/health`);
+    const data = await res.json();
+    const badge = document.getElementById('db-badge');
+    if (data.mongodb === 'connected') {
+      badge.className = 'badge badge-green';
+      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span> MongoDB Active`;
+    } else {
+      badge.className = 'badge badge-blue';
+      badge.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-blue-500 inline-block animate-pulse"></span> Local Memory Store`;
+    }
+  } catch (e) {
+    document.getElementById('db-badge').className = 'badge badge-red';
+    document.getElementById('db-badge').innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-red-500 inline-block"></span> Server Offline`;
+  }
+}
+checkHealth();
+
+// ─────────────────────────────────────
+// Patient Search & OTP Access
+// ─────────────────────────────────────
+async function searchPatient() {
+  const phone = document.getElementById('search-phone').value.trim().replace(/\s/g,'');
+  if (!phone) return;
+  const resultBox = document.getElementById('search-result');
+  resultBox.innerHTML = `<div class="text-xs text-slate-400 text-center py-3"><span class="spinner-dark"></span></div>`;
+  resultBox.classList.remove('hidden');
+
+  try {
+    const res  = await fetch(`${API}/patient/${encodeURIComponent(phone)}`);
+    const data = await res.json();
+    
+    // 1. Check if patient has visited this hospital before (only for existing patients)
+    if (data.found) {
+      const hasHistory = (data.patient.visits || []).some(v => v.hosp_id === loggedHosp || (v.doctor || '').includes(loggedHosp)) ||
+                         (data.patient.reports || []).some(r => r.hosp_id === loggedHosp || (r.hospital || '').includes(loggedHosp));
+      
+      if (hasHistory) {
+         renderSearchResult(data.patient);
+         return;
+      }
+    }
+
+    // 2. Check active access grants
+    try {
+       const grantRes = await fetch(`${API}/access/grants/${encodeURIComponent(phone)}`);
+       const grantData = await grantRes.json();
+       const hasGrant = (grantData.grants || []).some(g => g.hosp_id === loggedHosp);
+       if (hasGrant) {
+          if (data.found) {
+             renderSearchResult(data.patient);
+          } else {
+             resultBox.innerHTML = `
+               <div class="card text-center py-5 bg-white border border-slate-200 shadow-sm">
+                 <div class="text-3xl mb-2">🆕</div>
+                 <p class="text-xs font-semibold text-slate-700">New Patient Record</p>
+                 <p class="text-xs text-slate-400 mt-1">No previous files found for <strong>${phone}</strong></p>
+                 <button class="btn-primary mt-3 text-xs" onclick="prefillUploadPhone('${esc(phone)}')">Prefill Uploader →</button>
+               </div>`;
+          }
+          return;
+       }
+    } catch(e) {}
+
+    // 3. Request OTP for both new and existing patients without history/grants
+    if (data.found) {
+      renderOTPRequest(data.patient, phone);
+    } else {
+      renderOTPRequest({name: 'New Patient'}, phone);
+    }
+
+  } catch (e) {
+    resultBox.innerHTML = `<div class="text-xs text-red-500 text-center py-3">Search failed — check server status</div>`;
+  }
+}
+
+function renderOTPRequest(patient, phone) {
+  const div = document.getElementById('search-result');
+  div.innerHTML = `
+    <div class="card fade-in border border-amber-200 shadow-sm bg-amber-50">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="avatar" style="background:#d97706">${initials(patient.name)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-xs text-slate-900 truncate">Patient File Protected</div>
+          <div class="text-[10px] text-amber-700">${esc(phone)}</div>
+        </div>
+      </div>
+      <p class="text-[10px] text-amber-800 mb-3 leading-relaxed">This patient has not visited <strong>${esc(loggedHosp)}</strong> before. OTP authorization from the patient is required to access their clinical history.</p>
+      
+      <div id="otp-req-view">
+        <button class="btn-primary w-full text-xs py-2 mb-1 border-amber-600 bg-amber-600 hover:bg-amber-700" onclick="requestOTP('${esc(phone)}')">Request OTP Access</button>
+      </div>
+
+      <div id="otp-verify-view" class="hidden">
+        <p class="text-[10px] text-amber-700 font-bold mb-1.5 uppercase">Enter 6-Digit OTP</p>
+        <div class="flex gap-2 mb-2">
+          <input id="otp-input" class="input-field text-center tracking-[0.5em] text-sm font-bold border-amber-300 focus:border-amber-500" type="text" placeholder="123456" maxlength="6" onkeydown="if(event.key==='Enter') verifyOTP('${esc(phone)}')"/>
+        </div>
+        <button class="btn-primary bg-emerald-600 border-emerald-600 hover:bg-emerald-700 w-full text-xs py-2" onclick="verifyOTP('${esc(phone)}')">Verify & Unlock Records</button>
+      </div>
+    </div>`;
+  div.classList.remove('hidden');
+}
+
+async function requestOTP(phone) {
+  const btn = document.querySelector('#otp-req-view button');
+  const oldText = btn.innerHTML;
+  btn.innerHTML = '<span class="spinner font-bold"></span> Sending...';
+  try {
+    const res = await fetch(`${API}/access/request-otp`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ patient_phone: phone, requesting_hosp_id: loggedHosp, requesting_doc_id: loggedDoc })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      document.getElementById('otp-req-view').classList.add('hidden');
+      document.getElementById('otp-verify-view').classList.remove('hidden');
+      // For demo purposes, we alert the OTP so we can test it
+      alert('DEMO MODE - SMS SENT\\n\\nOTP: ' + data.demo_otp);
+      showToast('OTP sent to patient via SMS', 'success');
+      document.getElementById('otp-input').focus();
+    } else {
+      showToast(data.message, 'error');
+      btn.innerHTML = oldText;
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+    btn.innerHTML = oldText;
+  }
+}
+
+async function verifyOTP(phone) {
+  const otp = document.getElementById('otp-input').value.trim();
+  if (!otp) return;
+  try {
+    const res = await fetch(`${API}/access/verify-otp`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ patient_phone: phone, requesting_hosp_id: loggedHosp, requesting_doc_id: loggedDoc, otp: otp })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      showToast('Access Granted!', 'success');
+      searchPatient(); // Reload and it will succeed
+    } else {
+      showToast(data.message, 'error');
+    }
+  } catch(e) {
+    showToast('Network error', 'error');
+  }
+}
+
+function renderSearchResult(patient) {
+  const visits = patient.visits || [];
+  const allergies = patient.known_allergies || [];
+  const div = document.getElementById('search-result');
+  div.innerHTML = `
+    <div class="card fade-in border border-emerald-100 shadow-sm">
+      <div class="flex items-center gap-3 mb-3">
+        <div class="avatar">${initials(patient.name)}</div>
+        <div class="flex-1 min-w-0">
+          <div class="font-bold text-xs text-slate-900 truncate">${esc(patient.name || 'Unknown')}</div>
+          <div class="text-[10px] text-slate-400">${esc(patient.phone)} · ${visits.length} visit${visits.length!==1?'s':''}</div>
+        </div>
+      </div>
+      ${allergies.length ? `<div class="badge badge-red text-[10px] py-0.5 px-2 mb-3">⚠ Allergy Alert: ${allergies.join(', ')}</div>` : ''}
+      <button class="btn-primary w-full text-xs py-2 flex items-center justify-center gap-2" onclick="loadPatientFromRecent('${esc(patient.phone)}')">
+        Open Patient File →
+      </button>
+    </div>`;
+  div.classList.remove('hidden');
+  document.getElementById('upload-phone').value = patient.phone;
+}
+
+function prefillUploadPhone(phone) {
+  document.getElementById('upload-phone').value = phone;
+  showToast('Phone number prefilled in uploader!');
+}
+
+// ─────────────────────
+// Recent Directory List
+// ─────────────────────
+async function loadRecent() {
+  try {
+    const hospIdParam = loggedHosp ? `?hosp_id=${encodeURIComponent(loggedHosp)}` : '';
+    const res  = await fetch(`${API}/recent${hospIdParam}`);
+    const data = await res.json();
+    const list = document.getElementById('recent-list');
+    const patients = data.patients || [];
+    const todayCount = data.today_count ?? patients.length;
+    const totalCount = data.total_count ?? patients.length;
+
+    document.getElementById('patient-count-badge').textContent = `${todayCount} seen today`;
+    document.getElementById('doc-stats-today').textContent = todayCount;
+    document.getElementById('doc-stats-total').textContent  = totalCount;
+
+    if (!patients.length) {
+      list.innerHTML = `
+        <div class="flex flex-col items-center justify-center py-10 text-center gap-2">
+          <span class="text-3xl">🏥</span>
+          <p class="text-xs font-semibold text-slate-400">No patient files yet</p>
+          <p class="text-[10px] text-slate-300">Upload a prescription to create the first record</p>
+        </div>`;
+      return;
+    }
+
+    list.innerHTML = patients.map(p => {
+      // Format last visit date label
+      let visitLabel = '';
+      if (p.last_visit_date) {
+        try {
+          const d = new Date(p.last_visit_date + 'T00:00:00');
+          const isToday = p.is_today;
+          visitLabel = isToday
+            ? '<span class="badge badge-green" style="font-size:0.6rem;padding:2px 6px">Today</span>'
+            : `<span class="text-[10px] text-slate-400">${d.toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>`;
+        } catch(e) { visitLabel = ''; }
+      }
+      return `
+        <div class="recent-row shadow-sm border border-slate-100" onclick="loadPatientFromRecent('${esc(p.phone)}')">
+          <div class="avatar" style="width:32px;height:32px;font-size:.65rem">${initials(p.name)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-xs font-semibold text-slate-800 truncate">${esc(p.name)}</div>
+            <div class="text-[10px] text-slate-400 truncate">${esc(p.phone)}</div>
+          </div>
+          <div class="flex flex-col items-end gap-1 shrink-0">
+            ${visitLabel}
+            ${p.has_alerts ? '<span class="badge badge-red" style="width:18px;height:18px;display:flex;align-items:center;justify-content:center;padding:0;font-size:.6rem;border-radius:999px">!</span>' : ''}
+          </div>
+          <span class="text-[10px] text-slate-300 font-semibold">→</span>
+        </div>`;
+    }).join('');
+  } catch(e) {
+    document.getElementById('recent-list').innerHTML = `<div class="text-xs text-red-400 text-center py-6">Directory offline</div>`;
+  }
+}
+
+function loadPatientFromRecent(phone) {
+  window.location.href = `/hospital/patient-file?phone=${encodeURIComponent(phone)}`;
+}
+
+// ─────────────────────────────────────
+// Document Uploader Drag & Drop
+// ─────────────────────────────────────
+let selectedFile = null;
+
+function previewFile(event) {
+  selectedFile = event.target.files[0];
+  if (!selectedFile) return;
+  if (selectedFile.type.startsWith('image/')) {
+    const preview = document.getElementById('preview');
+    preview.src = URL.createObjectURL(selectedFile);
+    preview.classList.remove('hidden');
+  } else {
+    document.getElementById('preview').classList.add('hidden');
+  }
+  document.getElementById('extract-btn').disabled = false;
+  document.getElementById('drop-zone').style.borderColor = '#10b981';
+}
+
+function handleDragOver(e) { e.preventDefault(); document.getElementById('drop-zone').classList.add('drag-over'); }
+function handleDragLeave()  { document.getElementById('drop-zone').classList.remove('drag-over'); }
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('drop-zone').classList.remove('drag-over');
+  const f = e.dataTransfer.files[0];
+  if (!f) return;
+  selectedFile = f;
+  const dt = new DataTransfer();
+  dt.items.add(f);
+  document.getElementById('file-input').files = dt.files;
+  if (f.type.startsWith('image/')) {
+    const preview = document.getElementById('preview');
+    preview.src = URL.createObjectURL(f);
+    preview.classList.remove('hidden');
+  }
+  document.getElementById('extract-btn').disabled = false;
+  document.getElementById('drop-zone').style.borderColor = '#10b981';
+}
+
+async function processDocument() {
+  const phone = document.getElementById('upload-phone').value.trim().replace(/\s/g,'');
+  if (!phone) { showToast('Please enter patient mobile number first', 'error'); return; }
+  if (!selectedFile) { showToast('Select a prescription file first', 'error'); return; }
+
+  // Show progress
+  const btn = document.getElementById('extract-btn');
+  btn.innerHTML = `<span class="spinner font-bold"></span> Extracting…`;
+  btn.disabled  = true;
+
+  const progressWrap = document.getElementById('progress-wrap');
+  const progressBar  = document.getElementById('progress-bar');
+  const progressLabel= document.getElementById('progress-label');
+  const progressPct  = document.getElementById('progress-pct');
+  progressWrap.classList.remove('hidden');
+
+  // Simulate extraction steps
+  const stages = [
+    [15, 'Uploading prescription to secure storage…'],
+    [40, 'Gemini analyzing handwriting and extracting items…'],
+    [65, 'Verifying allergies and drug interactions…'],
+    [85, 'Finalizing patient file compilation…'],
+    [98, 'Writing records to database…'],
+  ];
+  let stageIdx = 0;
+  const stageTimer = setInterval(() => {
+    if (stageIdx < stages.length) {
+      const [pct, label] = stages[stageIdx++];
+      progressBar.style.width = pct + '%';
+      progressLabel.textContent = label;
+      progressPct.textContent   = pct + '%';
+    }
+  }, 800);
+
+  try {
+    const formData = new FormData();
+    formData.append('phone', phone);
+    formData.append('file', selectedFile);
+
+    const res = await fetch(`${API}/process`, { method: 'POST', body: formData });
+    const result = await res.json();
+
+    clearInterval(stageTimer);
+    progressBar.style.width = '100%';
+    progressLabel.textContent = 'Processing Completed!';
+    progressPct.textContent = '100%';
+
+    showToast('Prescription processed! Opening patient file...', 'success');
+    
+    // Redirect to patient detail view after a short delay
+    setTimeout(() => {
+      window.location.href = `/hospital/patient-file?phone=${encodeURIComponent(phone)}`;
+    }, 1200);
+
+  } catch(e) {
+    clearInterval(stageTimer);
+    progressWrap.classList.add('hidden');
+    showToast('Failed to process document — is server offline?', 'error');
+    btn.innerHTML = `<svg width="14" height="14" fill="none" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg> Extract &amp; View File`;
+    btn.disabled = false;
+  }
+}
+
+// ─────────────────────────────────────
+// Utilities
+// ─────────────────────────────────────
+function initials(name) {
+  if (!name) return 'UN';
+  return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0,2).toUpperCase();
+}
+
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function showToast(msg, type='info') {
+  const t = document.createElement('div');
+  t.className = `fixed bottom-6 right-6 z-50 fade-in text-sm font-semibold px-5 py-3 rounded-xl shadow-lg border ${
+    type==='error'?'bg-red-600 border-red-500 text-white':'bg-emerald-600 border-emerald-500 text-white'
+  }`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// Load Directory
+loadRecent();
+</script>
+<script src="/ui/i18n.js"></script>
+
+<div id="google_translate_element" style="display:none;"></div>
+<script type="text/javascript">
+function googleTranslateElementInit() {
+  new google.translate.TranslateElement({pageLanguage: 'en', includedLanguages: 'hi,te,bn,mr,ta,en', autoDisplay: false}, 'google_translate_element');
+}
+</script>
+<script type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+
+</body>
+</html>

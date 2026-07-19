@@ -1,0 +1,1035 @@
+
+
+---
+
+
+
+---
+
+
+
+---
+
+CliniqAI
+Multi-Agent Clinical Intelligence for
+India's 1.3 Million Underserved Clinics
+
+---
+
+AI that reads handwritten prescriptions in 6 Indian languages,
+catches drug interactions before they become emergencies,
+and unifies patient records across every clinic.
+
+---
+
+THEME
+
+---
+
+Healthcare Technology
+
+---
+
+DOMAIN
+
+---
+
+AI/ML · Cloud · Patient Safety
+
+---
+
+TEAM
+
+---
+
+pranjaljha103
+
+---
+
+
+
+---
+
+01  PROBLEM STATEMENT
+
+---
+
+Every 5 Seconds, a Preventable Drug Error Happens in India
+
+---
+
+
+
+---
+
+
+
+---
+
+5.6M
+
+---
+
+Hospitalizations per yearfrom drug interactions
+
+---
+
+
+
+---
+
+
+
+---
+
+95%
+
+---
+
+Clinics run entirelyon paper registers
+
+---
+
+
+
+---
+
+
+
+---
+
+₹3.7 Lakh+
+
+---
+
+Annual cost of enterpriseEHR per hospital
+
+---
+
+
+
+---
+
+
+
+---
+
+800M+
+
+---
+
+Patients in rural andsemi-urban India affected
+
+---
+
+
+
+---
+
+
+
+---
+
+“
+
+---
+
+Priya, 42, is diabetic with a known Penicillin allergy. Her village clinic treats her cold and prescribes Amoxicillin — a Penicillin-class antibiotic.
+Her allergy is noted in a paper register at a different clinic 30 km away. There is no way for the prescribing doctor to know.
+Priya takes the medicine. Within an hour, she is in anaphylactic shock.
+—  This plays out thousands of times daily across India.  CliniqAI will end it.
+
+---
+
+Big hospitals get ₹37-lakh EHR systems.  India's 1.3M small clinics get nothing.  CliniqAI fills that gap.
+
+---
+
+
+
+---
+
+2/8
+
+---
+
+01  PROBLEM STATEMENT (CONTD.)
+
+---
+
+Why Existing Solutions Fail — Including ABHA
+
+---
+
+
+
+---
+
+
+
+---
+
+Paper Register
+
+---
+
+Hospital EHR
+
+---
+
+ABHA / ABDM
+
+---
+
+CliniqAI
+
+---
+
+
+
+---
+
+Cost per clinic
+
+---
+
+₹0
+
+---
+
+₹3.7L+ / year
+
+---
+
+Free
+
+---
+
+Free Tier
+
+---
+
+
+
+---
+
+Setup time
+
+---
+
+Instant
+
+---
+
+6–12 months
+
+---
+
+Weeks (IT + ID)
+
+---
+
+5 minutes
+
+---
+
+
+
+---
+
+Drug interaction alerts
+
+---
+
+None
+
+---
+
+Within 1 hospital
+
+---
+
+None
+
+---
+
+ALL clinics
+
+---
+
+
+
+---
+
+Handwritten Rx OCR
+
+---
+
+N/A
+
+---
+
+English typed only
+
+---
+
+None
+
+---
+
+6 Indian languages
+
+---
+
+
+
+---
+
+Cross-clinic records
+
+---
+
+None
+
+---
+
+Siloed per hospital
+
+---
+
+Records vault
+
+---
+
+Unified + active safety
+
+---
+
+
+
+---
+
+Without pre-enrollment
+
+---
+
+Yes
+
+---
+
+Yes
+
+---
+
+Needs ABHA ID
+
+---
+
+Phone number, instant
+
+---
+
+
+
+---
+
+AI clinical assistant
+
+---
+
+None
+
+---
+
+Varies
+
+---
+
+None
+
+---
+
+Built-in
+
+---
+
+
+
+---
+
+
+
+---
+
+ABHA stores health records.  CliniqAI actively prevents harm before it happens.
+CliniqAI will sync with ABHA in Phase 3 — making it the AI safety bridge for clinics not yet on ABDM.
+
+---
+
+
+
+---
+
+3/8
+
+---
+
+02  PROPOSED SOLUTION
+
+---
+
+4-Agent Pipeline — Photo to Safety Alert in Under 3 Seconds
+
+---
+
+
+
+---
+
+We don't ask doctors to change their workflow.  We wrap AI around their existing one.  Just snap a photo.
+
+---
+
+1   Doctor uploads prescription photo  (any smartphone, any language)
+
+---
+
+
+
+---
+
+
+
+---
+
+PARALLEL
+
+---
+
+ExtractionAgent
+Gemini 3.5 Flash → structured JSON
+with per-field confidence scores
+
+---
+
+PatientContextAgent
+Fetches full history from ALL clinics
+MVP: phone ID  |  Phase 3: ABHA ID
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+SafetyAgent  [HARD BLOCKING GATE]
+WHO EML + DrugBank + CDSCO  —  HIGH alerts BLOCK until doctor override
+
+---
+
+
+
+---
+
+
+
+---
+
+RecordUpdateAgent  —  SHA-256 hash-chain audit trail  +  Cloud KMS encryption
+
+---
+
+
+
+---
+
+4
+
+---
+
+SpecializedAgents
+
+---
+
+
+
+---
+
+<10s
+
+---
+
+End-to-EndProcessing
+
+---
+
+
+
+---
+
+6
+
+---
+
+IndianLanguages
+
+---
+
+
+
+---
+
+95%+
+
+---
+
+Drug Coverage(WHO+OpenFDA)
+
+---
+
+
+
+---
+
+4/8
+
+---
+
+03  TECHNOLOGY STACK
+
+---
+
+Built on Google Cloud — Every Layer Justified
+
+---
+
+
+
+---
+
+Layer
+
+---
+
+Technology
+
+---
+
+Why This Choice
+
+---
+
+
+
+---
+
+AI / OCR
+
+---
+
+Gemini 3.5 Flash (Vertex AI)
+
+---
+
+Best multilingual handwriting recognition; per-field confidence scoring
+
+---
+
+
+
+---
+
+Drug Safety Data
+
+---
+
+WHO EML + OpenFDA + NLM RxNorm
+
+---
+
+95%+ coverage of drugs in India's primary care; brand-generic mapping
+
+---
+
+
+
+---
+
+Agent Orchestration
+
+---
+
+Google ADK (Agent Dev Kit)
+
+---
+
+Native multi-agent with FunctionTool + MCP integration
+
+---
+
+
+
+---
+
+Patient Database
+
+---
+
+MongoDB Atlas via MCP Server
+
+---
+
+Flexible schema for medical records; MCP protocol for agent access
+
+---
+
+
+
+---
+
+Backend
+
+---
+
+Python + FastAPI
+
+---
+
+Async-native framework matches multi-agent pipeline architecture
+
+---
+
+
+
+---
+
+Security
+
+---
+
+Cloud KMS + SHA-256 Chains
+
+---
+
+PII encryption at rest; tamper-evident hash-chain audit log
+
+---
+
+
+
+---
+
+Real-Time Alerts
+
+---
+
+Google Cloud Pub/Sub
+
+---
+
+Critical drug alerts pushed to doctors in real-time
+
+---
+
+
+
+---
+
+Deployment
+
+---
+
+Google Cloud Run
+
+---
+
+Serverless, auto-scaling, pay-per-use; ideal for unpredictable clinic loads
+
+---
+
+
+
+---
+
+5/8
+
+---
+
+04  EXPECTED IMPACT
+
+---
+
+Quantified Impact & Sustainability Model
+
+---
+
+
+
+---
+
+
+
+---
+
+1.3M
+
+---
+
+Target Clinicsin India
+
+---
+
+
+
+---
+
+
+
+---
+
+800M+
+
+---
+
+AddressablePatients
+
+---
+
+
+
+---
+
+
+
+---
+
+<3 sec
+
+---
+
+End-to-EndProcessing
+
+---
+
+
+
+---
+
+
+
+---
+
+6
+
+---
+
+IndianLanguages
+
+---
+
+
+
+---
+
+
+
+---
+
+5 min
+
+---
+
+ClinicOnboarding
+
+---
+
+
+
+---
+
+
+
+---
+
+72,800+
+
+---
+
+Drug InteractionsIntercepted / yr*
+
+---
+
+* Projected at 1% deployment (13,000 clinics) based on average prescription volume
+
+---
+
+Sustainability Model
+
+---
+
+
+
+---
+
+
+
+---
+
+Free Tier
+
+---
+
+
+
+---
+
+≤100 prescriptions/month per clinic.Full OCR, drug alerts, cross-clinic memory.Covers ~80% of small rural clinics.
+
+---
+
+
+
+---
+
+
+
+---
+
+Clinic Pro  ₹499/mo
+
+---
+
+
+
+---
+
+Unlimited prescriptions, analyticsdashboard, priority support.Target: urban private clinics.
+
+---
+
+
+
+---
+
+
+
+---
+
+Health System
+
+---
+
+
+
+---
+
+NGO networks, district hospitals,state health departments.Custom pricing, bulk licensing.
+
+---
+
+
+
+---
+
+
+
+---
+
+Grant Pathway
+
+---
+
+
+
+---
+
+Startup India, Digital India, Google.orggrants. Phase 1 infra via Google Cloudfor Startups credits (Vertex AI).
+
+---
+
+
+
+---
+
+6/8
+
+---
+
+05  PROJECT ROADMAP
+
+---
+
+From Idea to National Impact
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Phase 1 — MVP Development
+
+---
+
+Hackathon Period
+
+---
+
+4-agent pipeline  ·  Prescription OCR in 6 languages (Gemini 3.5 Flash)  ·  Drug safety via WHO EML + DrugBank + CDSCO  ·  Cross-clinic memory via mobile number  ·  SHA-256 audit trail  ·  Cloud KMS encryption  ·  Cloud Run deployment
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Phase 2 — WhatsApp & Voice
+
+---
+
+Q3 2026
+
+---
+
+WhatsApp bot for prescription uploads  ·  Hindi voice-first interface for rural doctors  ·  SMS-based patient alerts  ·  Offline-capable mode for connectivity-poor regions
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Phase 3 — ABHA Integration & Scale
+
+---
+
+Q4 2026
+
+---
+
+ABHA ID integration — migrate from mobile-number keys to Aadhaar-linked ABHA IDs for permanent, government-verified identity  ·  ABDM health record sync  ·  Pharmacy Connect  ·  Multi-tenant deployment for district health authorities
+
+---
+
+
+
+---
+
+
+
+---
+
+
+
+---
+
+Phase 4 — Population Intelligence
+
+---
+
+2027
+
+---
+
+Anonymized disease trend detection from prescription data  ·  Predictive analytics for epidemic early warning  ·  Research collaboration with public health institutions
+
+---
+
+
+
+---
+
+Identity Path:  Mobile number (zero friction, MVP)  →  ABHA ID (Aadhaar-linked, permanent)  —  solving number recycling and shared-phone issues at scale
+
+---
+
+
+
+---
+
+7/8
+
+---
+
+
+
+---
+
+
+
+---
+
+Why CliniqAI Must Exist
+
+---
+
+Big hospitals have Epic and Cerner.  ABHA stores records passively.
+But 95% of India's clinics need an active AI safety layer.
+They need CliniqAI.
+
+---
+
+
+
+---
+
+"CliniqAI is a free-tier, multi-agent clinical intelligence platform that reads handwritten prescriptions in 6 Indian languages, prevents life-threatening drug interactions using WHO + OpenFDA + NLM RxNorm  data, unifies patient records through cross-clinic memory, and provides a credible ABHA migration path — bringing enterprise-grade patient safety to the 800 million Indians who currently have none."
+
+---
+
+Innovate.   Build.   Impact.
+
+---
+
+For 800 million patients who deserve better healthcare.
+
+---
+
